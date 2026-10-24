@@ -17,9 +17,15 @@ st.markdown("### Modul-Suite aktiv: Workflow, Multi-Upload (PDF & Word), Revisio
 
 # --- SIDEBAR: API-KEY & MODUS-WAHL ---
 st.sidebar.header("🔑 API-Konfiguration")
+
+env_api_key = os.environ.get("GEMINI_API_KEY", "")
+if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
+    env_api_key = st.secrets["GEMINI_API_KEY"]
+
 api_key_input = st.sidebar.text_input(
     "Google AI Studio API-Key",
     type="password",
+    value=env_api_key,
     placeholder="Dein Key hier einfügen..."
 )
 
@@ -30,9 +36,10 @@ app_mode = st.sidebar.radio(
 )
 
 st.sidebar.header("2. Ziel-Modell wählen")
+# HIER AKTUALISIERT: Aktuelle, verfügbare Modelle
 target_model = st.sidebar.selectbox(
     "Welche KI wird eingesetzt?",
-    ["gemini-2.5-pro", "gemini-1.5-pro", "gemini-2.5-flash", "Claude 3.5 Sonnet (Anthropic)", "GPT-4o (OpenAI)"],
+    ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-3.1-pro-preview", "Claude 3.5 Sonnet (Anthropic)", "GPT-4o (OpenAI)"],
     key="model_select"
 )
 
@@ -277,47 +284,41 @@ if st.button(f"🚀 Master-Prompt ausführen ({'Handwerk' if 'Handwerk' in app_m
             try:
                 client = genai.Client(api_key=api_key_input)
 
-                generated_prompt = f"""
-[ENTERPRISE CONTEXT / BETRIEBS-MODUS: {app_mode.upper()}]
-- Unternehmen: {company_name} ({founding_year})
-- Branche / Sektor: {industry_sector}
-- Corporate Language / Tonalität: {brand_tone}
-- Modus-Fokus: {mode_instructions}
-- Angeklickte Kernwerte & Betriebsnormen (Wert-Baukasten):
+                system_instruction = f"""
+Du handelst als erfahrener kaufmännischer und technischer Experte im Auftrag von "{company_name}" ({industry_sector}).
+Dein Betriebs-Modus ist: {app_mode.upper()}.
+Modus-Fokus: {mode_instructions}
+Tonalität & Corporate Language: {brand_tone}
+
+Deine verbindlichen betrieblichen Kernwerte und Standards:
 {company_values}
 
-[ZIELSPRACHE & LOKALISIERUNG]
-- Die gesamte Antwort, Analyse und Ausarbeitung muss zwingend in folgender Sprache verfasst werden: {target_language}.
-
-[INTERNES FIRMEN-GEDÄCHTNIS & MINI-RAG-KONTEXT]
-Der Nutzer hat folgende spezifische Betriebsnormen und Regeln hinterlegt, die für ALLE nachfolgenden Aufgaben als absolut verbindliches Gesetz gelten:
+Internes Firmen-Gedächtnis & Mini-RAG-Regeln:
 {company_rag_context if company_rag_context else "Keine spezifischen Zusatzregeln hinterlegt – nutze professionellen Standard des Gewerks."}
 
-[BETRIEBLICHE STAMMDATEN & KALKULATION]
+Betriebliche Stammdaten & Kalkulationsgrundlagen:
 - Stundenverrechnungssatz (Netto): {hourly_rate} € / Std.
 - Anfahrts-/Spesenpauschale: {travel_fee} €
 - Material-/Komponentenaufschlag: {material_markup}%
 - Zahlungsbedingungen: {payment_terms}
 
-[PRODUKT- UND PREISLISTE (BENUTZERDEFINIERT)]
+Benutzerdefinierte Produkt- und Preisliste:
 {custom_positions_input}
 
-[SYSTEM INSTRUCTION FOR {target_model}]
-Du handelst als erfahrener kaufmännischer und technischer Experte im Auftrag von "{company_name}" ({industry_sector}).
-Deine Aufgabe ist es, das vorliegende Anliegen bzw. die hochgeladenen Dokumente unter strikter Einhaltung des gewählten Modus ({app_mode}), der Zielsprache ({target_language}), der Unternehmenswerte, des Mini-RAG-Gedächtnisses, der Stammdaten und der Risikominimierung zu analysieren und zu lösen.
-
-[SACHVERHALT & AUFGABE]
-{task_description if task_description else "Analysiere die angehängten Dokumente im Sinne des Unternehmensprofils und des Firmen-Gedächtnisses und erstelle eine professionelle Ausarbeitung in der geforderten Zielsprache."}
-
 [OUTPUT-REGELN]
-1. Verfasse das Resultat strikt in der gewählten Zielsprache: {target_language}.
-2. Passe die Tiefe und Sprache exakt an den gewählten Modus und den Kernwerte-Baukasten an.
+1. Die gesamte Antwort, Analyse und Ausarbeitung muss zwingend in folgender Sprache verfasst werden: {target_language}.
+2. Passe Tiefe und Sprache exakt an den Modus, die Firmen-DNA und den Kernwerte-Baukasten an.
 3. Nutze exakt die hinterlegten Stundensätze, Aufschläge und Positionen für jegliche Berechnungen.
 4. Formuliere direkt einsatzbereit (Executive-Ready / Versandfertig).
 5. Strukturiere die Ausgabe übersichtlich mit sauberen Absätzen.
 """
 
-                contents_list = [generated_prompt]
+                user_payload = f"""
+[SACHVERHALT & AUFGABE]
+{task_description if task_description else "Analysiere die angehängten Dokumente im Sinne des Unternehmensprofils und des Firmen-Gedächtnisses und erstelle eine professionelle Ausarbeitung in der geforderten Zielsprache."}
+"""
+
+                contents_list = [user_payload]
 
                 if uploaded_files:
                     for uf in uploaded_files:
@@ -331,9 +332,15 @@ Deine Aufgabe ist es, das vorliegende Anliegen bzw. die hochgeladenen Dokumente 
                                 "data": uf.read()
                             })
 
+                # Modell-Fallstrick abfangen falls Drittanbieter gewählt
+                actual_model = target_model if not target_model.startswith("Claude") and not target_model.startswith("GPT") else "gemini-1.5-pro"
+
                 response = client.models.generate_content(
-                    model=target_model if not target_model.startswith("Claude") and not target_model.startswith("GPT") else "gemini-2.5-pro",
+                    model=actual_model,
                     contents=contents_list,
+                    config={
+                        "system_instruction": system_instruction
+                    }
                 )
 
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -391,8 +398,8 @@ Deine Aufgabe ist es, das vorliegende Anliegen bzw. die hochgeladenen Dokumente 
                         mime="text/csv"
                     )
 
-                with st.expander("🔍 Vollständig kompilierten Master-Prompt anzeigen"):
-                    st.code(generated_prompt, language="markdown")
+                with st.expander("🔍 Vollständig kompilierten System-Prompt anzeigen"):
+                    st.code(system_instruction, language="markdown")
 
             except Exception as e:
                 st.error(f"Fehler bei der Übertragung: {e}")
