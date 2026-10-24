@@ -102,7 +102,7 @@ else:
         "📊 Technischer Audit-Report & Meilenstein-Freigabe": "Erstelle einen formalen Audit- und Freigabebericht für den anstehenden Projektabschnitt gemäß ISO 9001 und unseren Qualitätsstandards."
     }
 
-# --- SESSION STATE INITIALISIERUNG FÜR DEN DEMO-MODUS ---
+# --- SESSION STATE INITIALISIERUNG ---
 if "company_input" not in st.session_state:
     st.session_state["company_input"] = default_company
 if "rag_input" not in st.session_state:
@@ -117,11 +117,20 @@ DEMO_HORROR_LASTENHEFT = """Projekt X-99: SPS-Automation und Roboterzellen-Anbin
 3. Schnittstellen: Gewährleistung erstreckt sich auch auf bauseits gestellte Fundamente und Vorleistungen Dritter.
 4. Äquivalenz: Bis zu 15 % nachträgliche Leistungsänderungen (Change Requests) sind ohne Mehrkosten im Festpreis enthalten."""
 
-# --- MODUL 2: UNTERNEHMENSPROFIL (VOLLE DROPDOWNS) ---
+# --- MODUL 2: UNTERNEHMENSPROFIL ---
 st.sidebar.header("4. Unternehmensprofil & Gewerk")
 
-company_name = st.sidebar.text_input("Betriebs- / Firmenname", value=st.session_state["company_input"], key="company_input")
-founding_year = st.sidebar.text_input("Historie / Größe", value=default_history)
+company_name = st.sidebar.text_input(
+    "Betriebs- / Firmenname", 
+    value=st.session_state["company_input"], 
+    key="company_input",
+    help="Trage hier den Namen deines eigenen Betriebs ein (oder nutze den Demo-Button)."
+)
+founding_year = st.sidebar.text_input(
+    "Historie / Größe", 
+    value=default_history,
+    help="z.B. Gegründet 1988, Meisterbetrieb"
+)
 
 selected_industry = st.sidebar.selectbox("Branche / Fachbereich", industry_options, key="industry_select")
 
