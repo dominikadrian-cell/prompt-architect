@@ -131,13 +131,20 @@ else:
 4. Äquivalenz: Bis zu 15 % nachträgliche Leistungsänderungen (Change Requests) sind ohne Mehrkosten im Festpreis enthalten."""
     demo_rag_text = "Interne Regel: Jede Pönale-Klausel über 0,2% pro Tag muss vor Angebotsabgabe von der Rechtsabteilung freigegeben werden. Keine ungedeckten Schnittstellenrisiken bei Fremdfundamenten."
 
-# --- SESSION STATE INITIALISIERUNG & BEI MODUSWECHSEL AKTUALISIEREN ---
-if mode_changed or "company_input" not in st.session_state:
+# --- SESSION STATE INITIALISIERUNG: FIRMA SETZEN, ABER AUFGABE & RAG STANDARDMÄSSIG LEER ---
+if "company_input" not in st.session_state or mode_changed:
     st.session_state["company_input"] = default_company
-if mode_changed or "rag_input" not in st.session_state:
-    st.session_state["rag_input"] = demo_rag_text
-if mode_changed or "task_input_area" not in st.session_state:
-    st.session_state["task_input_area"] = demo_task_text
+
+if "rag_input" not in st.session_state:
+    st.session_state["rag_input"] = ""
+
+if "task_input_area" not in st.session_state:
+    st.session_state["task_input_area"] = ""
+
+# Wenn der Modus gewechselt wird, leeren wir die Textfelder absichtlich, damit keine Altlasten drin bleiben
+if mode_changed:
+    st.session_state["rag_input"] = ""
+    st.session_state["task_input_area"] = ""
 
 # --- HAUPTBEREICH: STRUKTURIERUNG ÜBER TABS ---
 tab_workflow, tab_profile, tab_stammdaten = st.tabs([
@@ -151,17 +158,15 @@ with tab_workflow:
     
     col_demo, col_reset = st.columns([3, 1])
     with col_demo:
-        demo_btn_label = "🚀 Demo-Szenario laden (Industrie-Horrorlastenheft)" if not is_handwerk else "🚀 Demo-Szenario laden (Handwerks-Anfrage)"
+        demo_btn_label = "🚀 Industrie-Lastenheft (Demo) laden" if not is_handwerk else "🚀 Beispiel-Anfrage für Handwerk laden"
         if st.button(demo_btn_label, use_container_width=True):
-            st.session_state["company_input"] = default_company
             st.session_state["rag_input"] = demo_rag_text
             st.session_state["task_input_area"] = demo_task_text
             st.rerun()
     with col_reset:
-        if st.button("🗑️ Zurücksetzen", use_container_width=True):
-            st.session_state["company_input"] = default_company
-            st.session_state["rag_input"] = demo_rag_text
-            st.session_state["task_input_area"] = demo_task_text
+        if st.button("🗑️ Eingabe leeren", use_container_width=True):
+            st.session_state["rag_input"] = ""
+            st.session_state["task_input_area"] = ""
             st.rerun()
 
     selected_workflow = st.selectbox(
@@ -180,7 +185,7 @@ with tab_workflow:
         task_description = st.text_area(
             "Konkreter Sachverhalt / Aufgabendetails:",
             height=200,
-            placeholder="Beschreibe hier den konkreten Fall...",
+            placeholder="Beschreibe hier deinen konkreten Fall oder lade unten ein Dokument hoch...",
             key="task_input_area"
         )
 
