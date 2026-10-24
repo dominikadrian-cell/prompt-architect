@@ -46,7 +46,14 @@ target_language = st.sidebar.selectbox(
     ["Deutsch", "English (Englisch)", "Български (Bulgarisch)", "Français (Französisch)", "Español (Spanisch)"]
 )
 
-# --- DYNAMISCHE LOGIK & DEFAULT-WERTE JE NACH MODUS ---
+# --- MODUS-WECHSEL ERKENNEN & STATE AKTUALISIEREN ---
+if "last_app_mode" not in st.session_state:
+    st.session_state["last_app_mode"] = app_mode
+
+mode_changed = st.session_state["last_app_mode"] != app_mode
+if mode_changed:
+    st.session_state["last_app_mode"] = app_mode
+
 is_handwerk = "Handwerk" in app_mode
 
 if is_handwerk:
@@ -82,7 +89,6 @@ if is_handwerk:
         "🛡️ Unberechtigte Mängelrüge / Rechnungskürzung abwehren": "Formuliere eine bestimmte, aber sachliche Erwiderung auf die unberechtigte Mängelrüge des Kunden. Weise nach, dass unsere Leistung vertragsgerecht und fehlerfrei erbracht wurde.",
         "✉️ Verbindliches Kundenangebot verfassen": "Erstelle ein vollständiges, professionelles Angebot im Betriebsstil basierend auf der Kundenanfrage. Nutze unsere Standard-Positionen und Zahlungsbedingungen."
     }
-    demo_task_title = "Holzrahmen-Terrassenüberdachung & Sonderanpassung"
     demo_task_text = """Kundenanfrage für eine massgeschneiderte Terrassenüberdachung aus Lärche (ca. 6x4m). Bauseits sind die Punktfundamente bereits gesetzt, allerdings weicht der rechte Winkel um ca. 3cm ab. 
     Erstelle ein vollständiges, verbindliches Angebot inklusive Montage, Anfahrt und Materialaufschlag. Weise im Angebot charmant aber bestimmt auf die Toleranzabweichung der Fundamente hin."""
     demo_rag_text = ""
@@ -118,7 +124,6 @@ else:
         "⚖️ Rechtssichere Erwiderung auf AAB / Sonderklauseln": "Prüfe die abweichenden Allgemeinen Geschäftsbedingungen (AGB/AAB) des Auftraggebers und verfasse eine rechtssichere Streichungs- bzw. Änderungsliste im Sinne unseres Unternehmens.",
         "📊 Technischer Audit-Report & Meilenstein-Freigabe": "Erstelle einen formalen Audit- und Freigabebericht für den anstehenden Projektabschnitt gemäß ISO 9001 und unseren Qualitätsstandards."
     }
-    demo_task_title = "Projekt X-99: SPS-Automation und Roboterzellen-Anbindung"
     demo_task_text = """Projekt X-99: SPS-Automation und Roboterzellen-Anbindung
 1. Frist: Vollständige betriebsbereite Montage und CE-Validierung innerhalb von 4 Wochen ab Vertragsschluss.
 2. Pönale & Haftung: 0,5 % der Gesamtauftragssumme pro Kalendertag Verzug, maximal 25 %. Uneingeschränkte, verschuldensunabhängige Haftung für Betriebsunterbrechungen und Ausfallzeiten.
@@ -126,13 +131,13 @@ else:
 4. Äquivalenz: Bis zu 15 % nachträgliche Leistungsänderungen (Change Requests) sind ohne Mehrkosten im Festpreis enthalten."""
     demo_rag_text = "Interne Regel: Jede Pönale-Klausel über 0,2% pro Tag muss vor Angebotsabgabe von der Rechtsabteilung freigegeben werden. Keine ungedeckten Schnittstellenrisiken bei Fremdfundamenten."
 
-# --- SESSION STATE INITIALISIERUNG ---
-if "company_input" not in st.session_state:
+# --- SESSION STATE INITIALISIERUNG & BEI MODUSWECHSEL AKTUALISIEREN ---
+if mode_changed or "company_input" not in st.session_state:
     st.session_state["company_input"] = default_company
-if "rag_input" not in st.session_state:
-    st.session_state["rag_input"] = ""
-if "task_input_area" not in st.session_state:
-    st.session_state["task_input_area"] = ""
+if mode_changed or "rag_input" not in st.session_state:
+    st.session_state["rag_input"] = demo_rag_text
+if mode_changed or "task_input_area" not in st.session_state:
+    st.session_state["task_input_area"] = demo_task_text
 
 # --- HAUPTBEREICH: STRUKTURIERUNG ÜBER TABS ---
 tab_workflow, tab_profile, tab_stammdaten = st.tabs([
@@ -155,8 +160,8 @@ with tab_workflow:
     with col_reset:
         if st.button("🗑️ Zurücksetzen", use_container_width=True):
             st.session_state["company_input"] = default_company
-            st.session_state["rag_input"] = ""
-            st.session_state["task_input_area"] = ""
+            st.session_state["rag_input"] = demo_rag_text
+            st.session_state["task_input_area"] = demo_task_text
             st.rerun()
 
     selected_workflow = st.selectbox(
