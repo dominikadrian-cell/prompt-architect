@@ -211,12 +211,18 @@ with st.sidebar.expander("💼 5. Stammdaten & Kalkulation"):
     material_markup = st.slider("Material- / Komponenten-Aufschlag (%)", min_value=0, max_value=100, value=20)
     payment_terms = st.text_input("Zahlungsbedingungen", value="14 Tage netto, 2% Skonto bei Zahlung innerhalb von 7 Tagen")
 
-# --- MODUL 4: POSITIONEN ---
+# --- MODUL 4: POSITIONEN & PRODUKTE ---
 st.sidebar.header("🛠️ 6. Positionen & Produkte")
+st.sidebar.markdown(
+    "Trage hier deine eigenen Artikel, Dienstleistungen oder Stundensätze ein "
+    "(jeweils eine Position pro Zeile nach dem Schema `Name: Preis`):"
+)
 custom_positions_input = st.sidebar.text_area(
-    "Deine Artikel & Leistungen (Name: Preis)",
-    height=120,
-    value=default_positions
+    "Deine Artikel & Leistungen:",
+    height=130,
+    value=default_positions,
+    placeholder="z.B.\nMontagepauschale: 350.00 €\nSpezialbauteil Typ A: 1250.00 €\nWartungsstunde: 85.00 €",
+    help="Die KI zieht diese Preise und Bezeichnungen automatisch heran, wenn du Angebote oder Nachträge erstellen lässt."
 )
 
 # --- HAUPTBEREICH: WORKFLOW & RESET ---
@@ -253,7 +259,7 @@ with col2:
         "PDFs, Word-Dateien (.docx) oder Textdateien gleichzeitig hochladen:",
         type=["pdf", "txt", "docx"],
         accept_multiple_files=True,
-        help="Du kannst PDFs, Word-Dokumente und Textdateien mischen. Word-Dateien werden automatisch ausgelesen."
+        help="Du kannst PDFs, Word-Dokumente und Textdateien mischen. Word-Dokumente werden automatisch ausgelesen."
     )
     if uploaded_files:
         file_names = ", ".join([f"`{f.name}`" for f in uploaded_files])
