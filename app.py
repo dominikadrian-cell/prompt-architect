@@ -1,4 +1,4 @@
-import os
+,import os
 import datetime
 import hashlib
 import streamlit as st
@@ -12,7 +12,7 @@ st.set_page_config(
 )
 
 st.title("⚡ Prompt-Architect: Industrial & Handwerk Edition")
-st.markdown("### Modul-Suite aktiv: Workflow, Multi-Upload, Revisionssicherer Audit-Trail & Reiner Python-CSV-Export")
+st.markdown("### Modul-Suite aktiv: Workflow, Multi-Upload, Revisionssicherer Audit-Trail & Mini-RAG-Gedächtnis")
 
 # --- SIDEBAR: API-KEY & MODUS-WAHL ---
 st.sidebar.header("🔑 API-Konfiguration")
@@ -111,6 +111,31 @@ else:
 brand_tone = st.sidebar.selectbox("Tonalität & Corporate Language", tone_options)
 company_values = st.sidebar.text_area("Kernwerte & Standards", height=100, value=default_values)
 
+# --- NEU: FIRMEN-GEDÄCHTNIS (MINI-RAG) MIT ERKLÄRBÄR-MODUL ---
+st.sidebar.markdown("---")
+st.sidebar.header("🧠 Firmen-Gedächtnis (Mini-RAG)")
+
+with st.sidebar.expander("💡 Wie füttere ich das Firmen-Gedächtnis richtig?", expanded=False):
+    st.markdown("""
+    **Warum das wichtig ist:** 
+    Ein Standard-Modell weiß nicht, wie dein Betrieb tickt. Mit diesem Feld baust du dir ein **eigenes Mini-RAG-System** auf – ganz ohne komplexe Datenbanken.
+    
+    * **❌ Schlecht (Vage):** 
+      > *"Wir sind ein zuverlässiger Betrieb und machen gute Qualität."*  
+      *(Ergebnis: Die KI liefert nur langweiligen Standard-Marketing-Brei.)*
+      
+    * **✅ Richtig (Präzise & Hart):** 
+      > *"Firma: Müller Elektrotechnik. Tonalität: Direkt, technisch versiert, kein Buzzword-Blabla. Feste Regeln: Jedes Angebot VOB-konform, Stundensatz 85€, Materialaufschlag 15%."*  
+      *(Ergebnis: Die KI agiert exakt wie dein bester leitender Mitarbeiter.)*
+    """)
+
+company_rag_context = st.sidebar.text_area(
+    "Unternehmens-DNA & spezifische Betriebsnormen:",
+    height=130,
+    placeholder="Trage hier deine konkreten Firmen-Regeln, Fallbeispiele oder den genauen Wortlaut ein...",
+    help="Diese Daten fließen als unsichtbarer, strikter System-Kontext in jede KI-Generierung ein."
+)
+
 # --- MODUL 3: STAMMDATEN ---
 with st.sidebar.expander("💼 4. Stammdaten & Kalkulation"):
     hourly_rate = st.number_input("Stundenverrechnungssatz (Netto in €)", value=default_hourly, step=5.0)
@@ -191,7 +216,7 @@ if st.button(f"🚀 Master-Prompt ausführen ({'Handwerk' if 'Handwerk' in app_m
     elif not api_key_input:
         st.warning("Bitte trage links deinen Google AI Studio API-Key ein.")
     else:
-        with st.spinner(f"Kompiliere Profil, Workflow, {len(uploaded_files) if uploaded_files else 0} Dokument(e) & Stammdaten..."):
+        with st.spinner(f"Kompiliere Profil, Mini-RAG-Gedächtnis, Workflow, {len(uploaded_files) if uploaded_files else 0} Dokument(e) & Stammdaten..."):
             try:
                 client = genai.Client(api_key=api_key_input)
 
@@ -204,6 +229,10 @@ if st.button(f"🚀 Master-Prompt ausführen ({'Handwerk' if 'Handwerk' in app_m
 - Betriebliche Kernwerte & Standards:
 {company_values}
 
+[INTERNES FIRMEN-GEDÄCHTNIS & MINI-RAG-KONTEXT]
+Der Nutzer hat folgende spezifische Betriebsnormen, Regeln und DNA hinterlegt, die für ALLE nachfolgenden Aufgaben als absolut verbindliches Gesetz gelten:
+{company_rag_context if company_rag_context else "Keine spezifischen Zusatzregeln hinterlegt – nutze professionellen Standard des Gewerks."}
+
 [BETRIEBLICHE STAMMDATEN & KALKULATION]
 - Stundenverrechnungssatz (Netto): {hourly_rate} € / Std.
 - Anfahrts-/Spesenpauschale: {travel_fee} €
@@ -215,13 +244,13 @@ if st.button(f"🚀 Master-Prompt ausführen ({'Handwerk' if 'Handwerk' in app_m
 
 [SYSTEM INSTRUCTION FOR {target_model}]
 Du handelst als erfahrener kaufmännischer und technischer Experte im Auftrag von "{company_name}" ({industry_sector}).
-Deine Aufgabe ist es, das vorliegende Anliegen bzw. die hochgeladenen Dokumente unter strikter Einhaltung des gewählten Modus ({app_mode}), der Unternehmenswerte, der Stammdaten und der Risikominimierung zu analysieren und zu lösen.
+Deine Aufgabe ist es, das vorliegende Anliegen bzw. die hochgeladenen Dokumente unter strikter Einhaltung des gewählten Modus ({app_mode}), der Unternehmenswerte, des Mini-RAG-Gedächtnisses, der Stammdaten und der Risikominimierung zu analysieren und zu lösen.
 
 [SACHVERHALT & AUFGABE]
-{task_description if task_description else "Analysiere die angehängten Dokumente im Sinne des Unternehmensprofils und erstelle eine professionelle Ausarbeitung."}
+{task_description if task_description else "Analysiere die angehängten Dokumente im Sinne des Unternehmensprofils und des Firmen-Gedächtnisses und erstelle eine professionelle Ausarbeitung."}
 
 [OUTPUT-REGELN]
-1. Passe die Tiefe und Sprache exakt an den gewählten Modus an (Bodenständig-Direkt für Handwerk, Risikobewusst-Präzise für Enterprise).
+1. Passe die Tiefe und Sprache exakt an den gewählten Modus und das Firmen-Gedächtnis an.
 2. Nutze exakt die hinterlegten Stundensätze, Aufschläge und Positionen für jegliche Berechnungen.
 3. Formuliere direkt einsatzbereit (Executive-Ready / Versandfertig).
 4. Strukturiere die Ausgabe übersichtlich mit sauberen Absätzen.
@@ -255,6 +284,7 @@ Deine Aufgabe ist es, das vorliegende Anliegen bzw. die hochgeladenen Dokumente 
 - Betriebs-Modus: {app_mode}
 - Verwendetes KI-Modell: {target_model}
 - Stammdaten-Basis: Stundensatz {hourly_rate}€ | Aufschlag {material_markup}%
+- Mini-RAG-Status: {'Aktiv (Benutzerdefiniert)' if company_rag_context else 'Standard'}
 - Audit-ID / Hash: #{content_hash}
 - Status: Dokument generiert über Prompt-Architect // Industrial AI (Revisionssicher)
 """
