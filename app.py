@@ -15,8 +15,8 @@ st.set_page_config(
 st.title("⚡ Prompt-Architect: Industrial & Handwerk Edition")
 st.markdown("### Modul-Suite aktiv: Workflow, Multi-Upload (PDF & Word), Revisionssicherer Audit-Trail, Mini-RAG & Wert-Baukasten")
 
-# --- SIDEBAR: API-KEY & MODUS-WAHL ---
-st.sidebar.header("🔑 API-Konfiguration")
+# --- SIDEBAR: NUR NOCH DAS NÖTIGSTE (GLOBAL SETUP) ---
+st.sidebar.header("🔑 API & Setup")
 
 env_api_key = os.environ.get("GEMINI_API_KEY", "")
 if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
@@ -29,32 +29,27 @@ api_key_input = st.sidebar.text_input(
     placeholder="Dein Key hier einfügen..."
 )
 
-st.sidebar.header("⚙️ 1. Betriebs-Modus wählen")
+st.sidebar.header("⚙️ Betriebs-Modus")
 app_mode = st.sidebar.radio(
-    "Leistungsklasse der KI:",
-    ["🔨 Handwerk & Kleinbetrieb (Praktisch & Direkt)", "🏭 Industrie & Mittelstand (Enterprise & Compliance)"]
+    "Leistungsklasse wählen:",
+    ["🔨 Handwerk & Kleinbetrieb", "🏭 Industrie & Enterprise"]
 )
 
-st.sidebar.header("2. Ziel-Modell wählen")
-# SAUBER BEREINIGT: Nur noch aktuelle, funktionierende Modelle
 target_model = st.sidebar.selectbox(
-    "Welche KI wird eingesetzt?",
-    [
-        "gemini-3.8-flash",
-        "gemini-3.1-pro-preview"
-    ],
+    "KI-Modell",
+    ["gemini-3.8-flash", "gemini-3.1-pro-preview"],
     key="model_select"
 )
 
-# --- SPRACHAUSWAHL ---
-st.sidebar.header("🌍 3. Ausgabesprache")
 target_language = st.sidebar.selectbox(
-    "Sprache für das Ergebnis:",
+    "Ausgabesprache",
     ["Deutsch", "English (Englisch)", "Български (Bulgarisch)", "Français (Französisch)", "Español (Spanisch)"]
 )
 
-# --- DYNAMISCHE LOGIK & WORKFLOW-SNIPPETS ---
-if "Handwerk" in app_mode:
+# --- DYNAMISCHE LOGIK & DEFAULT-WERTE JE NACH MODUS ---
+is_handwerk = "Handwerk" in app_mode
+
+if is_handwerk:
     default_company = "Tischlerei & Innenausbau Wagner e.K."
     default_history = "Gegründet 1988, Meisterbetrieb in 2. Generation"
     industry_options = [
@@ -83,10 +78,14 @@ if "Handwerk" in app_mode:
     workflow_snippets = {
         "Manuell eingeben (Freitext)": "",
         "⚠️ VOB-Bedenkenanzeige (Mangelhafte Vorleistung)": "Erstelle eine formgerechte und rechtssichere Bedenkenanzeige gemäß VOB/B. Der Untergrund bzw. die bauseits erbrachte Vorleistung ist mangelhaft und behindert unsere fachgerechte Ausführung. Weise auf Haftungsrisiken hin.",
-        "📋 Nachtragsangebot erstellen": "Erbeite ein sauberes Nachtragsangebot für die zusätzlich geforderten Leistungen (Mehrumfang). Nutze exakt unsere hinterlegten Stundensätze und Materialaufschläge.",
+        "📋 Nachtragsangebot erstellen": "Erstelle ein sauberes Nachtragsangebot für die zusätzlich geforderten Leistungen (Mehrumfang). Nutze exakt unsere hinterlegten Stundensätze und Materialaufschläge.",
         "🛡️ Unberechtigte Mängelrüge / Rechnungskürzung abwehren": "Formuliere eine bestimmte, aber sachliche Erwiderung auf die unberechtigte Mängelrüge des Kunden. Weise nach, dass unsere Leistung vertragsgerecht und fehlerfrei erbracht wurde.",
         "✉️ Verbindliches Kundenangebot verfassen": "Erstelle ein vollständiges, professionelles Angebot im Betriebsstil basierend auf der Kundenanfrage. Nutze unsere Standard-Positionen und Zahlungsbedingungen."
     }
+    demo_task_title = "Holzrahmen-Terrassenüberdachung & Sonderanpassung"
+    demo_task_text = """Kundenanfrage für eine massgeschneiderte Terrassenüberdachung aus Lärche (ca. 6x4m). Bauseits sind die Punktfundamente bereits gesetzt, allerdings weicht der rechte Winkel um ca. 3cm ab. 
+    Erstelle ein vollständiges, verbindliches Angebot inklusive Montage, Anfahrt und Materialaufschlag. Weise im Angebot charmant aber bestimmt auf die Toleranzabweichung der Fundamente hin."""
+    demo_rag_text = ""
 else:
     default_company = "Industrie-Anlagenbau Rhein-Ruhr GmbH"
     default_history = "Mittelständischer Anlagenbauer, 240 Mitarbeiter, gegr. 1978"
@@ -119,6 +118,13 @@ else:
         "⚖️ Rechtssichere Erwiderung auf AAB / Sonderklauseln": "Prüfe die abweichenden Allgemeinen Geschäftsbedingungen (AGB/AAB) des Auftraggebers und verfasse eine rechtssichere Streichungs- bzw. Änderungsliste im Sinne unseres Unternehmens.",
         "📊 Technischer Audit-Report & Meilenstein-Freigabe": "Erstelle einen formalen Audit- und Freigabebericht für den anstehenden Projektabschnitt gemäß ISO 9001 und unseren Qualitätsstandards."
     }
+    demo_task_title = "Projekt X-99: SPS-Automation und Roboterzellen-Anbindung"
+    demo_task_text = """Projekt X-99: SPS-Automation und Roboterzellen-Anbindung
+1. Frist: Vollständige betriebsbereite Montage und CE-Validierung innerhalb von 4 Wochen ab Vertragsschluss.
+2. Pönale & Haftung: 0,5 % der Gesamtauftragssumme pro Kalendertag Verzug, maximal 25 %. Uneingeschränkte, verschuldensunabhängige Haftung für Betriebsunterbrechungen und Ausfallzeiten.
+3. Schnittstellen: Gewährleistung erstreckt sich auch auf bauseits gestellte Fundamente und Vorleistungen Dritter.
+4. Äquivalenz: Bis zu 15 % nachträgliche Leistungsänderungen (Change Requests) sind ohne Mehrkosten im Festpreis enthalten."""
+    demo_rag_text = "Interne Regel: Jede Pönale-Klausel über 0,2% pro Tag muss vor Angebotsabgabe von der Rechtsabteilung freigegeben werden. Keine ungedeckten Schnittstellenrisiken bei Fremdfundamenten."
 
 # --- SESSION STATE INITIALISIERUNG ---
 if "company_input" not in st.session_state:
@@ -128,284 +134,188 @@ if "rag_input" not in st.session_state:
 if "task_input_area" not in st.session_state:
     st.session_state["task_input_area"] = ""
 
-# --- DEMO-DATEN INHALT ---
-DEMO_HORROR_LASTENHEFT = """Projekt X-99: SPS-Automation und Roboterzellen-Anbindung
-1. Frist: Vollständige betriebsbereite Montage und CE-Validierung innerhalb von 4 Wochen ab Vertragsschluss.
-2. Pönale & Haftung: 0,5 % der Gesamtauftragssumme pro Kalendertag Verzug, maximal 25 %. Uneingeschränkte, verschuldensunabhängige Haftung für Betriebsunterbrechungen und Ausfallzeiten.
-3. Schnittstellen: Gewährleistung erstreckt sich auch auf bauseits gestellte Fundamente und Vorleistungen Dritter.
-4. Äquivalenz: Bis zu 15 % nachträgliche Leistungsänderungen (Change Requests) sind ohne Mehrkosten im Festpreis enthalten."""
+# --- HAUPTBEREICH: STRUKTURIERUNG ÜBER TABS ---
+tab_workflow, tab_profile, tab_stammdaten = st.tabs([
+    "⚡ 1. Schnellstart & Workflow", 
+    "🏢 2. Firmen-DNA & Mini-RAG", 
+    "💼 3. Stammdaten & Produkte"
+])
 
-# --- PRÄSENTATIONS-MODUS / DEMO-BUTTON (VOR DEN WIDGETS) ---
-st.sidebar.markdown("---")
-st.sidebar.subheader("🎬 Präsentations-Modus")
-if st.sidebar.button("🚀 Horrorlastenheft Demonstration", use_container_width=True):
-    st.session_state["company_input"] = "Industrie-Anlagenbau Rhein-Ruhr GmbH"
-    st.session_state["rag_input"] = "Interne Regel: Jede Pönale-Klausel über 0,2% pro Tag muss vor Angebotsabgabe von der Rechtsabteilung freigegeben werden. Keine ungedeckten Schnittstellenrisiken bei Fremdfundamenten."
-    st.session_state["task_input_area"] = DEMO_HORROR_LASTENHEFT
-    st.rerun()
+with tab_workflow:
+    st.subheader("Aufgabenstellung & Ausführung")
+    
+    # Präsentations-Modus / Demo-Button passend zum Modus
+    col_demo, col_reset = st.columns([3, 1])
+    with col_demo:
+        demo_btn_label = "🚀 Demo-Szenario laden (Industrie-Horrorlastenheft)" if not is_handwerk else "🚀 Demo-Szenario laden (Handwerks-Anfrage)"
+        if st.button(demo_btn_label, use_container_width=True):
+            st.session_state["company_input"] = default_company
+            st.session_state["rag_input"] = demo_rag_text
+            st.session_state["task_input_area"] = demo_task_text
+            st.rerun()
+    with col_reset:
+        if st.button("🗑️ Zurücksetzen", use_container_width=True):
+            st.session_state["company_input"] = default_company
+            st.session_state["rag_input"] = ""
+            st.session_state["task_input_area"] = ""
+            st.rerun()
 
-st.sidebar.markdown("---")
-
-# --- MODUL 2: UNTERNEHMENSPROFIL ---
-st.sidebar.header("4. Unternehmensprofil & Gewerk")
-
-company_name = st.sidebar.text_input(
-    "Betriebs- / Firmenname", 
-    value=st.session_state["company_input"], 
-    key="company_input",
-    help="Trage hier deinen eigenen Betriebs- oder Firmennamen ein."
-)
-founding_year = st.sidebar.text_input(
-    "Historie / Größe", 
-    value=default_history,
-    help="z.B. Gegründet 1988, Meisterbetrieb"
-)
-
-selected_industry = st.sidebar.selectbox("Branche / Fachbereich", industry_options, key="industry_select")
-
-if selected_industry.startswith("➕"):
-    custom_industry_input = st.sidebar.text_input("Trage deine Branche/Gewerk ein:", value="Sonder-Maschinenbau")
-    industry_sector = custom_industry_input
-else:
-    industry_sector = selected_industry
-
-brand_tone = st.sidebar.selectbox("Tonalität & Corporate Language", tone_options)
-
-# --- WERT-BAUKASTEN (MULTI-SELECT FÜR KERNWERTE) ---
-st.sidebar.markdown("### 💎 Kernwerte & Standards (Baukasten)")
-available_value_options = [
-    "Pünktliche Lieferung & saubere Ausführung",
-    "Ehrliche Handschlagqualität & keine versteckten Kosten",
-    "VOB/B & BGB Rechtssicherheit bei Verträgen",
-    "Strenge Einhaltung von ISO-Normen & CE-Vorgaben",
-    "Keine ungedeckten Schnittstellenrisiken bei Fremdgewerken",
-    "Saubere Baustelle / besenreine Übergabe",
-    "Aktives Claim-Management & Fristenkontrolle"
-]
-
-selected_core_values = st.sidebar.multiselect(
-    "Wähle deine Betriebswerte (Mehrfachauswahl):",
-    available_value_options,
-    default=default_core_values,
-    help="Klicke Bausteine an oder wähle sie ab, um deine Firmen-DNA zu definieren."
-)
-
-custom_value_addition = st.sidebar.text_area(
-    "Eigene Zusatzregel (optional):",
-    placeholder="Trage hier weitere individuelle Standards ein...",
-    height=60
-)
-
-# Zusammenbau der Kernwerte für den Prompt
-company_values_list = [f"- {v}" for v in selected_core_values]
-if custom_value_addition:
-    company_values_list.append(f"- {custom_value_addition}")
-company_values = "\n".join(company_values_list)
-
-# --- FIRMEN-GEDÄCHTNIS (MINI-RAG) ---
-st.sidebar.markdown("---")
-st.sidebar.header("🧠 Firmen-Gedächtnis (Mini-RAG)")
-
-company_rag_context = st.sidebar.text_area(
-    "Unternehmens-DNA & spezifische Betriebsnormen:",
-    height=120,
-    value=st.session_state["rag_input"],
-    placeholder="Trage hier interne Regeln & Freigabegrenzen ein...",
-    key="rag_input"
-)
-
-# --- MODUL 3: STAMMDATEN ---
-with st.sidebar.expander("💼 5. Stammdaten & Kalkulation"):
-    hourly_rate = st.number_input("Stundenverrechnungssatz (Netto in €)", value=default_hourly, step=5.0)
-    travel_fee = st.number_input("Anfahrts- / Spesenpauschale (Netto in €)", value=default_travel, step=5.0)
-    material_markup = st.slider("Material- / Komponenten-Aufschlag (%)", min_value=0, max_value=100, value=20)
-    payment_terms = st.text_input("Zahlungsbedingungen", value="14 Tage netto, 2% Skonto bei Zahlung innerhalb von 7 Tagen")
-
-# --- MODUL 4: POSITIONEN & PRODUKTE ---
-st.sidebar.header("🛠️ 6. Positionen & Produkte")
-st.sidebar.markdown(
-    "Trage hier deine eigenen Artikel, Dienstleistungen oder Stundensätze ein "
-    "(jeweils eine Position pro Zeile nach dem Schema `Name: Preis`):"
-)
-custom_positions_input = st.sidebar.text_area(
-    "Deine Artikel & Leistungen:",
-    height=130,
-    value=default_positions,
-    placeholder="z.B.\nMontagepauschale: 350.00 €\nSpezialbauteil Typ A: 1250.00 €\nWartungsstunde: 85.00 €",
-    help="Die KI zieht diese Preise und Bezeichnungen automatisch heran, wenn du Angebote oder Nachträge erstellen lässt."
-)
-
-# --- HAUPTBEREICH: WORKFLOW & RESET ---
-st.subheader("7. Ein-Klick-Workflow & Aufgabenstellung")
-
-selected_workflow = st.selectbox(
-    "⚡ Schnellstart-Workflows (Snippets wählen oder anpassen):",
-    list(workflow_snippets.keys()),
-    key="workflow_select"
-)
-
-if selected_workflow != "Manuell eingeben (Freitext)" and workflow_snippets[selected_workflow]:
-    if st.session_state["task_input_area"] != workflow_snippets[selected_workflow]:
-        st.session_state["task_input_area"] = workflow_snippets[selected_workflow]
-
-if st.button("🗑️ Eingabe zurücksetzen", use_container_width=True):
-    st.session_state["company_input"] = default_company
-    st.session_state["rag_input"] = ""
-    st.session_state["task_input_area"] = ""
-    st.rerun()
-
-col1, col2 = st.columns([1, 1])
-
-with col1:
-    task_description = st.text_area(
-        "Konkreter Sachverhalt / Aufgabendetails:",
-        height=180,
-        placeholder="Beschreibe hier den konkreten Fall oder nutze links die Demonstration...",
-        key="task_input_area"
+    selected_workflow = st.selectbox(
+        "⚡ Schnellstart-Snippets (Optional wählen):",
+        list(workflow_snippets.keys()),
+        key="workflow_select"
     )
 
-with col2:
-    st.subheader("📁 Dokumenten-Archiv (Multi-Upload)")
-    uploaded_files = st.file_uploader(
-        "PDFs, Word-Dateien (.docx) oder Textdateien gleichzeitig hochladen:",
-        type=["pdf", "txt", "docx"],
-        accept_multiple_files=True,
-        help="Du kannst PDFs, Word-Dokumente und Textdateien mischen. Word-Dokumente werden automatisch ausgelesen."
-    )
-    if uploaded_files:
-        file_names = ", ".join([f"`{f.name}`" for f in uploaded_files])
-        total_size = sum([f.size for f in uploaded_files])
-        st.info(f"📄 {len(uploaded_files)} Datei(en) geladen: {file_names} ({round(total_size / 1024, 1)} KB gesamt)")
+    if selected_workflow != "Manuell eingeben (Freitext)" and workflow_snippets[selected_workflow]:
+        if st.session_state["task_input_area"] != workflow_snippets[selected_workflow]:
+            st.session_state["task_input_area"] = workflow_snippets[selected_workflow]
 
-# GENERATION & LIVE-CALL
-if st.button(f"🚀 Master-Prompt ausführen ({'Handwerk' if 'Handwerk' in app_mode else 'Enterprise'})", type="primary", use_container_width=True):
-    if not task_description and not uploaded_files:
-        st.warning("Bitte gib eine Aufgabe ein oder lade mindestens ein Dokument hoch.")
-    elif not api_key_input:
-        st.warning("Bitte trage links deinen Google AI Studio API-Key ein.")
-    else:
-        with st.spinner(f"Kompiliere Profil, Wert-Baukasten, Sprachwahl ({target_language}), {len(uploaded_files) if uploaded_files else 0} Dokument(e) & Stammdaten..."):
-            try:
-                client = genai.Client(api_key=api_key_input)
+    col1, col2 = st.columns([1, 1])
 
-                system_instruction = f"""
-Du handelst als erfahrener kaufmännischer und technischer Experte im Auftrag von "{company_name}" ({industry_sector}).
+    with col1:
+        task_description = st.text_area(
+            "Konkreter Sachverhalt / Aufgabendetails:",
+            height=200,
+            placeholder="Beschreibe hier den konkreten Fall...",
+            key="task_input_area"
+        )
+
+    with col2:
+        st.markdown("##### 📁 Dokumenten-Archiv (Multi-Upload)")
+        uploaded_files = st.file_uploader(
+            "PDFs, Word-Dateien (.docx) oder Textdateien hochladen:",
+            type=["pdf", "txt", "docx"],
+            accept_multiple_files=True,
+            help="Du kannst PDFs, Word-Dokumente und Textdateien mischen."
+        )
+        if uploaded_files:
+            file_names = ", ".join([f"`{f.name}`" for f in uploaded_files])
+            total_size = sum([f.size for f in uploaded_files])
+            st.info(f"📄 {len(uploaded_files)} Datei(en) geladen: {file_names} ({round(total_size / 1024, 1)} KB)")
+
+    # Dynamischer Ausführen-Button
+    exec_button_label = "🚀 Industrie-Analyse & Risiko-Check starten" if not is_handwerk else "🚀 Handwerker-Angebot / Bericht generieren"
+    
+    if st.button(exec_button_label, type="primary", use_container_width=True):
+        if not task_description and not uploaded_files:
+            st.warning("Bitte gib eine Aufgabe ein oder lade mindestens ein Dokument hoch.")
+        elif not api_key_input:
+            st.warning("Bitte trage in der Sidebar deinen Google AI Studio API-Key ein.")
+        else:
+            company_name = st.session_state["company_input"]
+            company_rag_context = st.session_state["rag_input"]
+            
+            with st.spinner(f"Kompiliere {app_mode}, Zielsprache ({target_language}), {len(uploaded_files) if uploaded_files else 0} Dokument(e) & Stammdaten..."):
+                try:
+                    client = genai.Client(api_key=api_key_input)
+
+                    system_instruction = f"""
+Du handelst als erfahrener kaufmännischer und technischer Experte im Auftrag von "{company_name}".
 Dein Betriebs-Modus ist: {app_mode.upper()}.
 Modus-Fokus: {mode_instructions}
-Tonalität & Corporate Language: {brand_tone}
-
-Deine verbindlichen betrieblichen Kernwerte und Standards:
-{company_values}
 
 Internes Firmen-Gedächtnis & Mini-RAG-Regeln:
-{company_rag_context if company_rag_context else "Keine spezifischen Zusatzregeln hinterlegt – nutze professionellen Standard des Gewerks."}
+{company_rag_context if company_rag_context else "Keine spezifischen Zusatzregeln hinterlegt – nutze professionellen Standard."}
 
 Betriebliche Stammdaten & Kalkulationsgrundlagen:
-- Stundenverrechnungssatz (Netto): {hourly_rate} € / Std.
-- Anfahrts-/Spesenpauschale: {travel_fee} €
-- Material-/Komponentenaufschlag: {material_markup}%
-- Zahlungsbedingungen: {payment_terms}
-
-Benutzerdefinierte Produkt- und Preisliste:
-{custom_positions_input}
+- Stundenverrechnungssatz (Netto): {default_hourly} € / Std.
+- Anfahrts-/Spesenpauschale: {default_travel} €
+- Material-/Komponentenaufschlag: 20%
+- Zahlungsbedingungen: 14 Tage netto, 2% Skonto bei Zahlung innerhalb von 7 Tagen
 
 [OUTPUT-REGELN]
 1. Die gesamte Antwort, Analyse und Ausarbeitung muss zwingend in folgender Sprache verfasst werden: {target_language}.
-2. Passe Tiefe und Sprache exakt an den Modus, die Firmen-DNA und den Kernwerte-Baukasten an.
-3. Nutze exakt die hinterlegten Stundensätze, Aufschläge und Positionen für jegliche Berechnungen.
-4. Formuliere direkt einsatzbereit (Executive-Ready / Versandfertig).
-5. Strukturiere die Ausgabe übersichtlich mit sauberen Absätzen.
+2. Passe Tiefe und Sprache exakt an den Modus und die Firmen-DNA an.
+3. Formuliere direkt einsatzbereit (Executive-Ready / Versandfertig).
+4. Strukturiere die Ausgabe übersichtlich mit sauberen Absätzen.
 """
 
-                user_payload = f"""
+                    user_payload = f"""
 [SACHVERHALT & AUFGABE]
-{task_description if task_description else "Analysiere die angehängten Dokumente im Sinne des Unternehmensprofils und des Firmen-Gedächtnisses und erstelle eine professionelle Ausarbeitung in der geforderten Zielsprache."}
+{task_description if task_description else "Analysiere die angehängten Dokumente im Sinne des Unternehmensprofils und des Firmen-Gedächtnisses."}
 """
 
-                contents_list = [user_payload]
+                    contents_list = [user_payload]
 
-                if uploaded_files:
-                    for uf in uploaded_files:
-                        if uf.name.endswith(".docx"):
-                            doc = docx.Document(uf)
-                            doc_text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
-                            contents_list.append(f"\n[INHALT AUS WORD-DATEI: {uf.name}]\n{doc_text}\n")
-                        else:
-                            contents_list.append({
-                                "mime_type": uf.type,
-                                "data": uf.read()
-                            })
+                    if uploaded_files:
+                        for uf in uploaded_files:
+                            if uf.name.endswith(".docx"):
+                                doc = docx.Document(uf)
+                                doc_text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
+                                contents_list.append(f"\n[INHALT AUS WORD-DATEI: {uf.name}]\n{doc_text}\n")
+                            else:
+                                contents_list.append({
+                                    "mime_type": uf.type,
+                                    "data": uf.read()
+                                })
 
-                response = client.models.generate_content(
-                    model=target_model,
-                    contents=contents_list,
-                    config={
-                        "system_instruction": system_instruction
-                    }
-                )
+                    response = client.models.generate_content(
+                        model=target_model,
+                        contents=contents_list,
+                        config={
+                            "system_instruction": system_instruction
+                        }
+                    )
 
-                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                raw_text = response.text
-                content_hash = hashlib.sha256(raw_text.encode('utf-8')).hexdigest()[:12]
+                    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    raw_text = response.text
+                    content_hash = hashlib.sha256(raw_text.encode('utf-8')).hexdigest()[:12]
 
-                audit_footer = f"""
+                    audit_footer = f"""
 ---
 [REVISIONS- UND AUDIT-TRAIL PROTOKOLL]
 - Zeitstempel: {timestamp}
-- Unternehmen: {company_name} ({industry_sector})
+- Unternehmen: {company_name}
 - Betriebs-Modus: {app_mode}
 - Zielsprache: {target_language}
 - Verwendetes KI-Modell: {target_model}
-- Stammdaten-Basis: Stundensatz {hourly_rate}€ | Aufschlag {material_markup}%
-- Mini-RAG-Status: {'Aktiv (Benutzerdefiniert)' if company_rag_context else 'Standard'}
 - Audit-ID / Hash: #{content_hash}
 - Status: Dokument generiert über Prompt-Architect // Industrial AI (Revisionssicher)
 """
 
-                final_output = raw_text + audit_footer
+                    final_output = raw_text + audit_footer
 
-                st.success("Erfolgreich ausgeführt & revisionssicher protokolliert!")
-                st.markdown("### 📄 Ergebnis mit Audit-Trail:")
-                st.markdown(final_output)
+                    st.success("Erfolgreich ausgeführt & revisionssicher protokolliert!")
+                    st.markdown("### 📄 Ergebnis mit Audit-Trail:")
+                    st.markdown(final_output)
 
-                st.session_state["last_output"] = final_output
+                    st.session_state["last_output"] = final_output
 
-                csv_content = "Kategorie,Parameter,Wert\n"
-                csv_content += f"Unternehmensdaten,Firma,\"{company_name}\"\n"
-                csv_content += f"Unternehmensdaten,Branche,\"{industry_sector}\"\n"
-                csv_content += f"Unternehmensdaten,Modus,\"{app_mode}\"\n"
-                csv_content += f"Sprach-Auswahl,Zielsprache,\"{target_language}\"\n"
-                csv_content += f"Stammdaten,Stundensatz (Netto),{hourly_rate} EUR\n"
-                csv_content += f"Stammdaten,Anfahrt/Spesen,{travel_fee} EUR\n"
-                csv_content += f"Stammdaten,Materialaufschlag,{material_markup}%\n"
-                csv_content += f"Audit,Audit-Hash,#{content_hash}\n"
-                csv_content += f"Audit,Zeitstempel,\"{timestamp}\"\n"
-                
-                csv_bytes = csv_content.encode('utf-8')
+                    col_dl1, col_dl2 = st.columns(2)
+                    with col_dl1:
+                        st.download_button(
+                            label="📥 Dokument als Textdatei herunterladen",
+                            data=final_output,
+                            file_name=f"Auswertung_{company_name.replace(' ', '_')}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                            mime="text/plain"
+                        )
+                    with col_dl2:
+                        st.download_button(
+                            label="📊 Audit-Protokoll als CSV exportieren",
+                            data=f"Modus,Firma,Hash,Zeitstempel\n\"{app_mode}\",\"{company_name}\",#{content_hash},\"{timestamp}\"",
+                            file_name=f"Audit_{company_name.replace(' ', '_')}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                            mime="text/csv"
+                        )
 
-                col_dl1, col_dl2 = st.columns(2)
-                with col_dl1:
-                    st.download_button(
-                        label="📥 Dokument als Textdatei herunterladen",
-                        data=final_output,
-                        file_name=f"Auswertung_{company_name.replace(' ', '_')}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                        mime="text/plain"
-                    )
-                with col_dl2:
-                    st.download_button(
-                        label="📊 Stammdaten & Audit als CSV exportieren",
-                        data=csv_bytes,
-                        file_name=f"Kalkulation_{company_name.replace(' ', '_')}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                        mime="text/csv"
-                    )
+                except Exception as e:
+                    st.error(f"Fehler bei der Übertragung: {e}")
 
-                with st.expander("🔍 Vollständig kompilierten System-Prompt anzeigen"):
-                    st.code(system_instruction, language="markdown")
+with tab_profile:
+    st.subheader("Unternehmens-DNA & Mini-RAG")
+    
+    col_p1, col_p2 = st.columns(2)
+    with col_p1:
+        company_name = st.text_input(
+            "Betriebs- / Firmenname", 
+            value=st.session_state["company_input"], 
+            key="company_input"
+        )
+        founding_year = st.text_input("Historie / Größe", value=default_history)
+        selected_industry = st.selectbox("Branche / Fachbereich", industry_options)
+        brand_tone = st.selectbox("Tonalität & Corporate Language", tone_options)
 
-            except Exception as e:
-                st.error(f"Fehler bei der Übertragung: {e}")
-
-if "last_output" in st.session_state and st.session_state["last_output"]:
-    st.divider()
-    st.markdown("### 📋 Ergebnis in Zwischenablage kopieren")
-    st.code(st.session_state["last_output"], language="markdown")
+    with col_p2:
+        company_rag_context = st.text_area(
+            "🧠 Firmen-Gedächtnis & spezifische Betriebsnormen (Mini-RAG):",
+            height=180,
+            value=
