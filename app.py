@@ -18,7 +18,6 @@ st.markdown("### Modul-Suite aktiv: Workflow, Multi-Upload (PDF & Word), Revisio
 # --- SIDEBAR: API-KEY & MODUS-WAHL ---
 st.sidebar.header("🔑 API-Konfiguration")
 
-# Automatischer Fallback auf st.secrets oder Umgebungsvariablen
 env_api_key = os.environ.get("GEMINI_API_KEY", "")
 if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
     env_api_key = st.secrets["GEMINI_API_KEY"]
@@ -37,12 +36,12 @@ app_mode = st.sidebar.radio(
 )
 
 st.sidebar.header("2. Ziel-Modell wählen")
-# AKTUALISIERT: Exakt auf die neuen Google-API-Vorgaben angepasst
+# GEÄNDERT: Zurück auf hochverfügbare, stabile Modelle, die nicht in den 503-Überlastungsfehler laufen
 target_model = st.sidebar.selectbox(
     "Welche KI wird eingesetzt?",
     [
-        "gemini-3.8-flash",
-        "gemini-3.1-pro-preview"
+        "gemini-1.5-flash",
+        "gemini-1.5-pro"
     ],
     key="model_select"
 )
@@ -241,12 +240,13 @@ st.subheader("7. Ein-Klick-Workflow & Aufgabenstellung")
 
 selected_workflow = st.selectbox(
     "⚡ Schnellstart-Workflows (Snippets wählen oder anpassen):",
-    list(workflow_snippets.keys())
+    list(workflow_snippets.keys()),
+    key="workflow_select"
 )
 
-initial_task_text = workflow_snippets[selected_workflow]
-if selected_workflow != "Manuell eingeben (Freitext)" and initial_task_text:
-    st.session_state["task_input_area"] = initial_task_text
+if selected_workflow != "Manuell eingeben (Freitext)" and workflow_snippets[selected_workflow]:
+    if st.session_state["task_input_area"] != workflow_snippets[selected_workflow]:
+        st.session_state["task_input_area"] = workflow_snippets[selected_workflow]
 
 if st.button("🗑️ Eingabe zurücksetzen", use_container_width=True):
     st.session_state["company_input"] = default_company
