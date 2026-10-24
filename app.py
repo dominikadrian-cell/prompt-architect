@@ -3,6 +3,7 @@ import datetime
 import hashlib
 import streamlit as st
 from google import genai
+import docx  # Für den Word-Dokumenten-Import (.docx)
 
 # --- SEITENKONFIGURATION ---
 st.set_page_config(
@@ -12,7 +13,7 @@ st.set_page_config(
 )
 
 st.title("⚡ Prompt-Architect: Industrial & Handwerk Edition")
-st.markdown("### Modul-Suite aktiv: Workflow, Multi-Upload, Revisionssicherer Audit-Trail & Mini-RAG-Gedächtnis")
+st.markdown("### Modul-Suite aktiv: Workflow, Multi-Upload (PDF & Word), Revisionssicherer Audit-Trail & Mini-RAG-Gedächtnis")
 
 # --- SIDEBAR: API-KEY & MODUS-WAHL ---
 st.sidebar.header("🔑 API-Konfiguration")
@@ -111,22 +112,14 @@ else:
 brand_tone = st.sidebar.selectbox("Tonalität & Corporate Language", tone_options)
 company_values = st.sidebar.text_area("Kernwerte & Standards", height=100, value=default_values)
 
-# --- NEU: FIRMEN-GEDÄCHTNIS (MINI-RAG) MIT ERKLÄRBÄR-MODUL ---
+# --- FIRMEN-GEDÄCHTNIS (MINI-RAG) ---
 st.sidebar.markdown("---")
 st.sidebar.header("🧠 Firmen-Gedächtnis (Mini-RAG)")
 
 with st.sidebar.expander("💡 Wie füttere ich das Firmen-Gedächtnis richtig?", expanded=False):
     st.markdown("""
     **Warum das wichtig ist:** 
-    Ein Standard-Modell weiß nicht, wie dein Betrieb tickt. Mit diesem Feld baust du dir ein **eigenes Mini-RAG-System** auf – ganz ohne komplexe Datenbanken.
-    
-    * **❌ Schlecht (Vage):** 
-      > *"Wir sind ein zuverlässiger Betrieb und machen gute Qualität."*  
-      *(Ergebnis: Die KI liefert nur langweiligen Standard-Marketing-Brei.)*
-      
-    * **✅ Richtig (Präzise & Hart):** 
-      > *"Firma: Müller Elektrotechnik. Tonalität: Direkt, technisch versiert, kein Buzzword-Blabla. Feste Regeln: Jedes Angebot VOB-konform, Stundensatz 85€, Materialaufschlag 15%."*  
-      *(Ergebnis: Die KI agiert exakt wie dein bester leitender Mitarbeiter.)*
+    Mit diesem Feld baust du dir ein **eigenes Mini-RAG-System** auf – ganz ohne komplexe Datenbanken.
     """)
 
 company_rag_context = st.sidebar.text_area(
@@ -161,13 +154,11 @@ selected_workflow = st.selectbox(
 
 initial_task_text = workflow_snippets[selected_workflow]
 
-# Session State für das Eingabefeld initialisieren
 if "task_input" not in st.session_state:
     st.session_state["task_input"] = initial_task_text
 elif selected_workflow != "Manuell eingeben (Freitext)":
     st.session_state["task_input"] = initial_task_text
 
-# Horror-Lastenheft als Demo-Daten
 DEMO_HORROR_LASTENHEFT = """Projekt X-99: SPS-Automation und Roboterzellen-Anbindung
 1. Frist: Vollständige betriebsbereite Montage und CE-Validierung innerhalb von 4 Wochen ab Vertragsschluss.
 2. Pönale & Haftung: 0,5 % der Gesamtauftragssumme pro Kalendertag Verzug, maximal 25 %. Uneingeschränkte, verschuldensunabhängige Haftung für Betriebsunterbrechungen und Ausfallzeiten.
@@ -199,10 +190,10 @@ with col1:
 with col2:
     st.subheader("📁 Dokumenten-Archiv (Multi-Upload)")
     uploaded_files = st.file_uploader(
-        "PDFs, Lastenhefte, Verträge oder E-Mails gleichzeitig hochladen:",
-        type=["pdf", "txt"],
+        "PDFs, Word-Dateien (.docx) oder Textdateien gleichzeitig hochladen:",
+        type=["pdf", "txt", "docx"],
         accept_multiple_files=True,
-        help="Du kannst mehrere Dateien gleichzeitig hochladen. Gemini gleicht alle Dokumente parallel gegen eure Firmen-DNA ab."
+        help="Du kannst PDFs, Word-Dokumente und Textdateien mischen. Word-Dateien werden automatisch ausgelesen."
     )
     if uploaded_files:
         file_names = ", ".join([f"`{f.name}`" for f in uploaded_files])
@@ -260,10 +251,17 @@ Deine Aufgabe ist es, das vorliegende Anliegen bzw. die hochgeladenen Dokumente 
 
                 if uploaded_files:
                     for uf in uploaded_files:
-                        contents_list.append({
-                            "mime_type": uf.type,
-                            "data": uf.read()
-                        })
+                        if uf.name.endswith(".docx"):
+                            # Word-Dokument auslesen und als Text an die KI übergeben
+                            doc = docx.Document(uf)
+                            doc_text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
+                            contents_list.append(f"\n[INHALT AUS WORD-DATEI: {uf.name}]\n{doc_text}\n")
+                        else:
+                            # PDFs und andere Binärdateien direkt übergeben
+                            contents_list.append({
+                                "mime_type": uf.type,
+                                "data": uf.read()
+                            })
 
                 # Modell-Aufruf über das Google GenAI SDK
                 response = client.models.generate_content(
@@ -295,10 +293,8 @@ Deine Aufgabe ist es, das vorliegende Anliegen bzw. die hochgeladenen Dokumente 
                 st.markdown("### 📄 Ergebnis mit Audit-Trail:")
                 st.markdown(final_output)
 
-                # In Session State speichern für spätere Abrufe
                 st.session_state["last_output"] = final_output
 
-                # --- REINER PYTHON CSV-EXPORT (OHNE PANDAS) ---
                 csv_content = "Kategorie,Parameter,Wert\n"
                 csv_content += f"Unternehmensdaten,Firma,\"{company_name}\"\n"
                 csv_content += f"Unternehmensdaten,Branche,\"{industry_sector}\"\n"
@@ -311,7 +307,6 @@ Deine Aufgabe ist es, das vorliegende Anliegen bzw. die hochgeladenen Dokumente 
                 
                 csv_bytes = csv_content.encode('utf-8')
 
-                # Download-Buttons nebeneinander
                 col_dl1, col_dl2 = st.columns(2)
                 with col_dl1:
                     st.download_button(
@@ -334,7 +329,6 @@ Deine Aufgabe ist es, das vorliegende Anliegen bzw. die hochgeladenen Dokumente 
             except Exception as e:
                 st.error(f"Fehler bei der Übertragung: {e}")
 
-# --- AUSGABE / COPY BEREICH FÜR DIE ZWISCHENABLAGE ---
 if "last_output" in st.session_state and st.session_state["last_output"]:
     st.divider()
     st.markdown("### 📋 Ergebnis in Zwischenablage kopieren")
