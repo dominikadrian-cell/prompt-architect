@@ -18,6 +18,7 @@ st.markdown("### Modul-Suite aktiv: Workflow, Multi-Upload (PDF & Word), Revisio
 # --- SIDEBAR: API-KEY & MODUS-WAHL ---
 st.sidebar.header("🔑 API-Konfiguration")
 
+# Automatischer Fallback auf st.secrets oder Umgebungsvariablen
 env_api_key = os.environ.get("GEMINI_API_KEY", "")
 if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
     env_api_key = st.secrets["GEMINI_API_KEY"]
@@ -36,10 +37,14 @@ app_mode = st.sidebar.radio(
 )
 
 st.sidebar.header("2. Ziel-Modell wählen")
-# HIER AKTUALISIERT: Aktuelle, verfügbare Modelle
+# BEREINIGT: Nur noch echte, aktuell funktionierende Google Gemini Modelle
 target_model = st.sidebar.selectbox(
     "Welche KI wird eingesetzt?",
-    ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-3.1-pro-preview", "Claude 3.5 Sonnet (Anthropic)", "GPT-4o (OpenAI)"],
+    [
+        "gemini-2.5-flash",
+        "gemini-2.5-pro",
+        "gemini-3.1-pro-preview"
+    ],
     key="model_select"
 )
 
@@ -332,11 +337,8 @@ Benutzerdefinierte Produkt- und Preisliste:
                                 "data": uf.read()
                             })
 
-                # Modell-Fallstrick abfangen falls Drittanbieter gewählt
-                actual_model = target_model if not target_model.startswith("Claude") and not target_model.startswith("GPT") else "gemini-1.5-pro"
-
                 response = client.models.generate_content(
-                    model=actual_model,
+                    model=target_model,
                     contents=contents_list,
                     config={
                         "system_instruction": system_instruction
