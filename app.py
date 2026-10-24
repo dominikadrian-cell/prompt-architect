@@ -63,8 +63,7 @@ if "Handwerk" in app_mode:
     default_core_values = [
         "Pünktliche Lieferung & saubere Ausführung",
         "Ehrliche Handschlagqualität & keine versteckten Kosten",
-        "VOB/B Rechtssicherheit bei Baustellen-Verträgen",
-        "Saubere Baustelle / besenreine Übergabe"
+        "VOB/B & BGB Rechtssicherheit bei Verträgen"
     ]
     default_hourly = 65.00
     default_travel = 45.00
@@ -94,10 +93,9 @@ else:
         "Verhandlungsstark & Bestimmt: Claim-Management & Risikominimierung"
     ]
     default_core_values = [
-        "Einhaltung aller ISO-Normen, VOB/B & BGB-Vorgaben",
-        "Keine ungeprüften Haftungsrisiken bei Ausschreibungen",
-        "Präzise Fristeneinhaltung und nachvollziehbare Dokumentation",
-        "Aktives Claim-Management bei bauseitigen Verzögerungen"
+        "VOB/B & BGB Rechtssicherheit bei Verträgen",
+        "Strenge Einhaltung von ISO-Normen & CE-Vorgaben",
+        "Aktives Claim-Management & Fristenkontrolle"
     ]
     default_hourly = 115.00
     default_travel = 150.00
@@ -163,7 +161,7 @@ else:
 
 brand_tone = st.sidebar.selectbox("Tonalität & Corporate Language", tone_options)
 
-# --- NEU: WERT-BAUKASTEN (MULTI-SELECT FÜR KERNWERTE) ---
+# --- WERT-BAUKASTEN (MULTI-SELECT FÜR KERNWERTE) ---
 st.sidebar.markdown("### 💎 Kernwerte & Standards (Baukasten)")
 available_value_options = [
     "Pünktliche Lieferung & saubere Ausführung",
@@ -178,7 +176,7 @@ available_value_options = [
 selected_core_values = st.sidebar.multiselect(
     "Wähle deine Betriebswerte (Mehrfachauswahl):",
     available_value_options,
-    default=default_core_values[:3],
+    default=default_core_values,
     help="Klicke Bausteine an oder wähle sie ab, um deine Firmen-DNA zu definieren."
 )
 
