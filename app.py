@@ -144,7 +144,6 @@ tab_workflow, tab_profile, tab_stammdaten = st.tabs([
 with tab_workflow:
     st.subheader("Aufgabenstellung & Ausführung")
     
-    # Präsentations-Modus / Demo-Button passend zum Modus
     col_demo, col_reset = st.columns([3, 1])
     with col_demo:
         demo_btn_label = "🚀 Demo-Szenario laden (Industrie-Horrorlastenheft)" if not is_handwerk else "🚀 Demo-Szenario laden (Handwerks-Anfrage)"
@@ -193,7 +192,6 @@ with tab_workflow:
             total_size = sum([f.size for f in uploaded_files])
             st.info(f"📄 {len(uploaded_files)} Datei(en) geladen: {file_names} ({round(total_size / 1024, 1)} KB)")
 
-    # Dynamischer Ausführen-Button
     exec_button_label = "🚀 Industrie-Analyse & Risiko-Check starten" if not is_handwerk else "🚀 Handwerker-Angebot / Bericht generieren"
     
     if st.button(exec_button_label, type="primary", use_container_width=True):
@@ -318,4 +316,46 @@ with tab_profile:
         company_rag_context = st.text_area(
             "🧠 Firmen-Gedächtnis & spezifische Betriebsnormen (Mini-RAG):",
             height=180,
-            value=
+            value=st.session_state["rag_input"],
+            placeholder="Trage hier interne Regeln, Freigabegrenzen oder Klauseln ein...",
+            key="rag_input"
+        )
+
+    st.markdown("### 💎 Kernwerte & Standards (Baukasten)")
+    available_value_options = [
+        "Pünktliche Lieferung & saubere Ausführung",
+        "Ehrliche Handschlagqualität & keine versteckten Kosten",
+        "VOB/B & BGB Rechtssicherheit bei Verträgen",
+        "Strenge Einhaltung von ISO-Normen & CE-Vorgaben",
+        "Keine ungedeckten Schnittstellenrisiken bei Fremdgewerken",
+        "Saubere Baustelle / besenreine Übergabe",
+        "Aktives Claim-Management & Fristenkontrolle"
+    ]
+    st.multiselect(
+        "Wähle deine Betriebswerte:",
+        available_value_options,
+        default=default_core_values
+    )
+
+with tab_stammdaten:
+    st.subheader("Stammdaten & Kalkulationsgrundlagen")
+    
+    col_s1, col_s2 = st.columns(2)
+    with col_s1:
+        hourly_rate = st.number_input("Stundenverrechnungssatz (Netto in €)", value=default_hourly, step=5.0)
+        travel_fee = st.number_input("Anfahrts- / Spesenpauschale (Netto in €)", value=default_travel, step=5.0)
+    with col_s2:
+        material_markup = st.slider("Material- / Komponenten-Aufschlag (%)", min_value=0, max_value=100, value=20)
+        payment_terms = st.text_input("Zahlungsbedingungen", value="14 Tage netto, 2% Skonto bei Zahlung innerhalb von 7 Tagen")
+
+    st.markdown("### 🛠️ Positionen & Produkte")
+    custom_positions_input = st.text_area(
+        "Deine Artikel & Leistungen (eine Position pro Zeile `Name: Preis`):",
+        height=130,
+        value=default_positions
+    )
+
+if "last_output" in st.session_state and st.session_state["last_output"]:
+    st.divider()
+    with st.expander("📋 Zuletzt generiertes Ergebnis anzeigen"):
+        st.code(st.session_state["last_output"], language="markdown")
