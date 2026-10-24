@@ -36,7 +36,7 @@ app_mode = st.sidebar.radio(
 )
 
 st.sidebar.header("2. Ziel-Modell wählen")
-# SAUBER BEREINIGT: Nur noch die aktuellen, funktionierenden Modelle (kein 1.5-Müll mehr)
+# SAUBER BEREINIGT: Nur noch aktuelle, funktionierende Modelle
 target_model = st.sidebar.selectbox(
     "Welche KI wird eingesetzt?",
     [
@@ -298,7 +298,7 @@ Deine verbindlichen betrieblichen Kernwerte und Standards:
 {company_values}
 
 Internes Firmen-Gedächtnis & Mini-RAG-Regeln:
-{company_rag_context if company_rag_context else "Keine spezifischen Zusatzregeln hinterlegt – nutze professionellen Standard del Gewerks."}
+{company_rag_context if company_rag_context else "Keine spezifischen Zusatzregeln hinterlegt – nutze professionellen Standard des Gewerks."}
 
 Betriebliche Stammdaten & Kalkulationsgrundlagen:
 - Stundenverrechnungssatz (Netto): {hourly_rate} € / Std.
@@ -363,3 +363,49 @@ Benutzerdefinierte Produkt- und Preisliste:
 """
 
                 final_output = raw_text + audit_footer
+
+                st.success("Erfolgreich ausgeführt & revisionssicher protokolliert!")
+                st.markdown("### 📄 Ergebnis mit Audit-Trail:")
+                st.markdown(final_output)
+
+                st.session_state["last_output"] = final_output
+
+                csv_content = "Kategorie,Parameter,Wert\n"
+                csv_content += f"Unternehmensdaten,Firma,\"{company_name}\"\n"
+                csv_content += f"Unternehmensdaten,Branche,\"{industry_sector}\"\n"
+                csv_content += f"Unternehmensdaten,Modus,\"{app_mode}\"\n"
+                csv_content += f"Sprach-Auswahl,Zielsprache,\"{target_language}\"\n"
+                csv_content += f"Stammdaten,Stundensatz (Netto),{hourly_rate} EUR\n"
+                csv_content += f"Stammdaten,Anfahrt/Spesen,{travel_fee} EUR\n"
+                csv_content += f"Stammdaten,Materialaufschlag,{material_markup}%\n"
+                csv_content += f"Audit,Audit-Hash,#{content_hash}\n"
+                csv_content += f"Audit,Zeitstempel,\"{timestamp}\"\n"
+                
+                csv_bytes = csv_content.encode('utf-8')
+
+                col_dl1, col_dl2 = st.columns(2)
+                with col_dl1:
+                    st.download_button(
+                        label="📥 Dokument als Textdatei herunterladen",
+                        data=final_output,
+                        file_name=f"Auswertung_{company_name.replace(' ', '_')}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                        mime="text/plain"
+                    )
+                with col_dl2:
+                    st.download_button(
+                        label="📊 Stammdaten & Audit als CSV exportieren",
+                        data=csv_bytes,
+                        file_name=f"Kalkulation_{company_name.replace(' ', '_')}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                        mime="text/csv"
+                    )
+
+                with st.expander("🔍 Vollständig kompilierten System-Prompt anzeigen"):
+                    st.code(system_instruction, language="markdown")
+
+            except Exception as e:
+                st.error(f"Fehler bei der Übertragung: {e}")
+
+if "last_output" in st.session_state and st.session_state["last_output"]:
+    st.divider()
+    st.markdown("### 📋 Ergebnis in Zwischenablage kopieren")
+    st.code(st.session_state["last_output"], language="markdown")
