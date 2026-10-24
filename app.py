@@ -37,12 +37,11 @@ app_mode = st.sidebar.radio(
 )
 
 st.sidebar.header("2. Ziel-Modell wählen")
-# BEREINIGT: Nur noch echte, aktuell funktionierende Google Gemini Modelle
+# AKTUALISIERT: Exakt auf die neuen Google-API-Vorgaben angepasst
 target_model = st.sidebar.selectbox(
     "Welche KI wird eingesetzt?",
     [
-        "gemini-2.5-flash",
-        "gemini-2.5-pro",
+        "gemini-3.8-flash",
         "gemini-3.1-pro-preview"
     ],
     key="model_select"
