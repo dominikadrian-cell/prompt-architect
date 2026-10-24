@@ -13,9 +13,9 @@ st.set_page_config(
 )
 
 st.title("⚡ Prompt-Architect: Industrial & Handwerk Edition")
-st.markdown("### Modul-Suite aktiv: Workflow, Multi-Upload (PDF & Word), Revisionssicherer Audit-Trail & Mini-RAG-Gedächtnis")
+st.markdown("### Modul-Suite aktiv: Workflow, Multi-Upload (PDF & Word), Revisionssicherer Audit-Trail, Mini-RAG & Internationale Sprachwahl")
 
-# --- SIDEBAR: API-KEY & MODUS-WAHL ---
+# --- SIDEBAR: API-KEY & MODUS-HAL ---
 st.sidebar.header("🔑 API-Konfiguration")
 api_key_input = st.sidebar.text_input(
     "Google AI Studio API-Key",
@@ -34,6 +34,13 @@ target_model = st.sidebar.selectbox(
     "Welche KI wird eingesetzt?",
     ["gemini-2.5-pro", "gemini-1.5-pro", "gemini-2.5-flash", "Claude 3.5 Sonnet (Anthropic)", "GPT-4o (OpenAI)"],
     key="model_select"
+)
+
+# --- NEU: SPRACHAUSWAHL ---
+st.sidebar.header("🌍 3. Ausgabesprache")
+target_language = st.sidebar.selectbox(
+    "Sprache für das Ergebnis:",
+    ["Deutsch", "English (Englisch)", "Български (Bulgarisch)", "Français (Französisch)", "Español (Spanisch)"]
 )
 
 # --- DYNAMISCHE LOGIK & WORKFLOW-SNIPPETS ---
@@ -95,10 +102,25 @@ else:
         "📊 Technischer Audit-Report & Meilenstein-Freigabe": "Erstelle einen formalen Audit- und Freigabebericht für den anstehenden Projektabschnitt gemäß ISO 9001 und unseren Qualitätsstandards."
     }
 
-# --- MODUL 2: UNTERNEHMENSPROFIL ---
-st.sidebar.header("3. Unternehmensprofil & Gewerk")
+# --- SESSION STATE INITIALISIERUNG ---
+if "company_input" not in st.session_state:
+    st.session_state["company_input"] = default_company
+if "rag_input" not in st.session_state:
+    st.session_state["rag_input"] = ""
+if "task_input_area" not in st.session_state:
+    st.session_state["task_input_area"] = ""
 
-company_name = st.sidebar.text_input("Betriebs- / Firmenname", value=default_company)
+# --- DEMO-DATEN INHALT ---
+DEMO_HORROR_LASTENHEFT = """Projekt X-99: SPS-Automation und Roboterzellen-Anbindung
+1. Frist: Vollständige betriebsbereite Montage und CE-Validierung innerhalb von 4 Wochen ab Vertragsschluss.
+2. Pönale & Haftung: 0,5 % der Gesamtauftragssumme pro Kalendertag Verzug, maximal 25 %. Uneingeschränkte, verschuldensunabhängige Haftung für Betriebsunterbrechungen und Ausfallzeiten.
+3. Schnittstellen: Gewährleistung erstreckt sich auch auf bauseits gestellte Fundamente und Vorleistungen Dritter.
+4. Äquivalenz: Bis zu 15 % nachträgliche Leistungsänderungen (Change Requests) sind ohne Mehrkosten im Festpreis enthalten."""
+
+# --- MODUL 2: UNTERNEHMENSPROFIL ---
+st.sidebar.header("4. Unternehmensprofil & Gewerk")
+
+company_name = st.sidebar.text_input("Betriebs- / Firmenname", value=st.session_state["company_input"], key="company_input")
 founding_year = st.sidebar.text_input("Historie / Größe", value=default_history)
 
 selected_industry = st.sidebar.selectbox("Branche / Fachbereich", industry_options, key="industry_select")
@@ -116,28 +138,30 @@ company_values = st.sidebar.text_area("Kernwerte & Standards", height=100, value
 st.sidebar.markdown("---")
 st.sidebar.header("🧠 Firmen-Gedächtnis (Mini-RAG)")
 
-with st.sidebar.expander("💡 Wie füttere ich das Firmen-Gedächtnis richtig?", expanded=False):
-    st.markdown("""
-    **Warum das wichtig ist:** 
-    Mit diesem Feld baust du dir ein **eigenes Mini-RAG-System** auf – ganz ohne komplexe Datenbanken.
-    """)
-
 company_rag_context = st.sidebar.text_area(
     "Unternehmens-DNA & spezifische Betriebsnormen:",
     height=130,
-    placeholder="Trage hier deine konkreten Firmen-Regeln, Fallbeispiele oder den genauen Wortlaut ein...",
-    help="Diese Daten fließen als unsichtbarer, strikter System-Kontext in jede KI-Generierung ein."
+    value=st.session_state["rag_input"],
+    placeholder="Trage hier deine konkreten Firmen-Regeln ein...",
+    key="rag_input"
 )
 
+# --- AUTOPILOT-DEMO BUTTON IN DER SIDEBAR ---
+if st.sidebar.button("🎬 Autopilot-Demo starten", use_container_width=True):
+    st.session_state["company_input"] = "Industrie-Anlagenbau Rhein-Ruhr GmbH"
+    st.session_state["rag_input"] = "Interne Regel: Jede Pönale-Klausel über 0,2% pro Tag muss vor Angebotsabgabe von der Rechtsabteilung freigegeben werden. Keine ungedeckten Schnittstellenrisiken bei Fremdfundamenten."
+    st.session_state["task_input_area"] = DEMO_HORROR_LASTENHEFT
+    st.rerun()
+
 # --- MODUL 3: STAMMDATEN ---
-with st.sidebar.expander("💼 4. Stammdaten & Kalkulation"):
+with st.sidebar.expander("💼 5. Stammdaten & Kalkulation"):
     hourly_rate = st.number_input("Stundenverrechnungssatz (Netto in €)", value=default_hourly, step=5.0)
     travel_fee = st.number_input("Anfahrts- / Spesenpauschale (Netto in €)", value=default_travel, step=5.0)
     material_markup = st.slider("Material- / Komponenten-Aufschlag (%)", min_value=0, max_value=100, value=20)
     payment_terms = st.text_input("Zahlungsbedingungen", value="14 Tage netto, 2% Skonto bei Zahlung innerhalb von 7 Tagen")
 
 # --- MODUL 4: POSITIONEN ---
-st.sidebar.header("🛠️ 5. Positionen & Produkte")
+st.sidebar.header("🛠️ 6. Positionen & Produkte")
 custom_positions_input = st.sidebar.text_area(
     "Deine Artikel & Leistungen (Name: Preis)",
     height=120,
@@ -145,7 +169,7 @@ custom_positions_input = st.sidebar.text_area(
 )
 
 # --- HAUPTBEREICH: WORKFLOW & DEMO-DATEN ---
-st.subheader("6. Ein-Klick-Workflow & Aufgabenstellung")
+st.subheader("7. Ein-Klick-Workflow & Aufgabenstellung")
 
 selected_workflow = st.selectbox(
     "⚡ Schnellstart-Workflows (Snippets wählen oder anpassen):",
@@ -153,27 +177,18 @@ selected_workflow = st.selectbox(
 )
 
 initial_task_text = workflow_snippets[selected_workflow]
-
-if "task_input" not in st.session_state:
-    st.session_state["task_input"] = initial_task_text
-elif selected_workflow != "Manuell eingeben (Freitext)":
-    st.session_state["task_input"] = initial_task_text
-
-DEMO_HORROR_LASTENHEFT = """Projekt X-99: SPS-Automation und Roboterzellen-Anbindung
-1. Frist: Vollständige betriebsbereite Montage und CE-Validierung innerhalb von 4 Wochen ab Vertragsschluss.
-2. Pönale & Haftung: 0,5 % der Gesamtauftragssumme pro Kalendertag Verzug, maximal 25 %. Uneingeschränkte, verschuldensunabhängige Haftung für Betriebsunterbrechungen und Ausfallzeiten.
-3. Schnittstellen: Gewährleistung erstreckt sich auch auf bauseits gestellte Fundamente und Vorleistungen Dritter.
-4. Äquivalenz: Bis zu 15 % nachträgliche Leistungsänderungen (Change Requests) sind ohne Mehrkosten im Festpreis enthalten."""
+if selected_workflow != "Manuell eingeben (Freitext)" and initial_task_text:
+    st.session_state["task_input_area"] = initial_task_text
 
 col_demo1, col_demo2 = st.columns([1, 1])
 with col_demo1:
-    if st.button("🚀 Demo-Daten laden (Horror-Lastenheft)", use_container_width=True):
-        st.session_state["task_input"] = DEMO_HORROR_LASTENHEFT
+    if st.button("🚀 Horror-Lastenheft laden", use_container_width=True):
+        st.session_state["task_input_area"] = DEMO_HORROR_LASTENHEFT
         st.rerun()
 
 with col_demo2:
     if st.button("🗑️ Eingabe zurücksetzen", use_container_width=True):
-        st.session_state["task_input"] = ""
+        st.session_state["task_input_area"] = ""
         st.rerun()
 
 col1, col2 = st.columns([1, 1])
@@ -182,8 +197,7 @@ with col1:
     task_description = st.text_area(
         "Konkreter Sachverhalt / Aufgabendetails:",
         height=180,
-        value=st.session_state["task_input"],
-        placeholder="Beschreibe hier den konkreten Fall oder klicke oben auf 'Demo-Daten laden'...",
+        placeholder="Beschreibe hier den konkreten Fall oder klicke oben auf 'Horror-Lastenheft laden'...",
         key="task_input_area"
     )
 
@@ -207,7 +221,7 @@ if st.button(f"🚀 Master-Prompt ausführen ({'Handwerk' if 'Handwerk' in app_m
     elif not api_key_input:
         st.warning("Bitte trage links deinen Google AI Studio API-Key ein.")
     else:
-        with st.spinner(f"Kompiliere Profil, Mini-RAG-Gedächtnis, Workflow, {len(uploaded_files) if uploaded_files else 0} Dokument(e) & Stammdaten..."):
+        with st.spinner(f"Kompiliere Profil, Mini-RAG, Sprachwahl ({target_language}), {len(uploaded_files) if uploaded_files else 0} Dokument(e) & Stammdaten..."):
             try:
                 client = genai.Client(api_key=api_key_input)
 
@@ -219,6 +233,9 @@ if st.button(f"🚀 Master-Prompt ausführen ({'Handwerk' if 'Handwerk' in app_m
 - Modus-Fokus: {mode_instructions}
 - Betriebliche Kernwerte & Standards:
 {company_values}
+
+[ZIELSPRACHE & LOKALISIERUNG]
+- Die gesamte Antwort, Analyse und Ausarbeitung muss zwingend in folgender Sprache verfasst werden: {target_language}.
 
 [INTERNES FIRMEN-GEDÄCHTNIS & MINI-RAG-KONTEXT]
 Der Nutzer hat folgende spezifische Betriebsnormen, Regeln und DNA hinterlegt, die für ALLE nachfolgenden Aufgaben als absolut verbindliches Gesetz gelten:
@@ -235,16 +252,17 @@ Der Nutzer hat folgende spezifische Betriebsnormen, Regeln und DNA hinterlegt, d
 
 [SYSTEM INSTRUCTION FOR {target_model}]
 Du handelst als erfahrener kaufmännischer und technischer Experte im Auftrag von "{company_name}" ({industry_sector}).
-Deine Aufgabe ist es, das vorliegende Anliegen bzw. die hochgeladenen Dokumente unter strikter Einhaltung des gewählten Modus ({app_mode}), der Unternehmenswerte, des Mini-RAG-Gedächtnisses, der Stammdaten und der Risikominimierung zu analysieren und zu lösen.
+Deine Aufgabe ist es, das vorliegende Anliegen bzw. die hochgeladenen Dokumente unter strikter Einhaltung des gewählten Modus ({app_mode}), der Zielsprache ({target_language}), der Unternehmenswerte, des Mini-RAG-Gedächtnisses, der Stammdaten und der Risikominimierung zu analysieren und zu lösen.
 
 [SACHVERHALT & AUFGABE]
-{task_description if task_description else "Analysiere die angehängten Dokumente im Sinne des Unternehmensprofils und des Firmen-Gedächtnisses und erstelle eine professionelle Ausarbeitung."}
+{task_description if task_description else "Analysiere die angehängten Dokumente im Sinne des Unternehmensprofils und des Firmen-Gedächtnisses und erstelle eine professionelle Ausarbeitung in der geforderten Zielsprache."}
 
 [OUTPUT-REGELN]
-1. Passe die Tiefe und Sprache exakt an den gewählten Modus und das Firmen-Gedächtnis an.
-2. Nutze exakt die hinterlegten Stundensätze, Aufschläge und Positionen für jegliche Berechnungen.
-3. Formuliere direkt einsatzbereit (Executive-Ready / Versandfertig).
-4. Strukturiere die Ausgabe übersichtlich mit sauberen Absätzen.
+1. Verfasse das Resultat strikt in der gewählten Zielsprache: {target_language}.
+2. Passe die Tiefe und Sprache exakt an den gewählten Modus und das Firmen-Gedächtnis an.
+3. Nutze exakt die hinterlegten Stundensätze, Aufschläge und Positionen für jegliche Berechnungen.
+4. Formuliere direkt einsatzbereit (Executive-Ready / Versandfertig).
+5. Strukturiere die Ausgabe übersichtlich mit sauberen Absätzen.
 """
 
                 contents_list = [generated_prompt]
@@ -252,24 +270,20 @@ Deine Aufgabe ist es, das vorliegende Anliegen bzw. die hochgeladenen Dokumente 
                 if uploaded_files:
                     for uf in uploaded_files:
                         if uf.name.endswith(".docx"):
-                            # Word-Dokument auslesen und als Text an die KI übergeben
                             doc = docx.Document(uf)
                             doc_text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
                             contents_list.append(f"\n[INHALT AUS WORD-DATEI: {uf.name}]\n{doc_text}\n")
                         else:
-                            # PDFs und andere Binärdateien direkt übergeben
                             contents_list.append({
                                 "mime_type": uf.type,
                                 "data": uf.read()
                             })
 
-                # Modell-Aufruf über das Google GenAI SDK
                 response = client.models.generate_content(
                     model=target_model if not target_model.startswith("Claude") and not target_model.startswith("GPT") else "gemini-2.5-pro",
                     contents=contents_list,
                 )
 
-                # --- REVISIONS- & AUDIT-TRAIL GENERIERUNG ---
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 raw_text = response.text
                 content_hash = hashlib.sha256(raw_text.encode('utf-8')).hexdigest()[:12]
@@ -280,6 +294,7 @@ Deine Aufgabe ist es, das vorliegende Anliegen bzw. die hochgeladenen Dokumente 
 - Zeitstempel: {timestamp}
 - Unternehmen: {company_name} ({industry_sector})
 - Betriebs-Modus: {app_mode}
+- Zielsprache: {target_language}
 - Verwendetes KI-Modell: {target_model}
 - Stammdaten-Basis: Stundensatz {hourly_rate}€ | Aufschlag {material_markup}%
 - Mini-RAG-Status: {'Aktiv (Benutzerdefiniert)' if company_rag_context else 'Standard'}
@@ -299,6 +314,7 @@ Deine Aufgabe ist es, das vorliegende Anliegen bzw. die hochgeladenen Dokumente 
                 csv_content += f"Unternehmensdaten,Firma,\"{company_name}\"\n"
                 csv_content += f"Unternehmensdaten,Branche,\"{industry_sector}\"\n"
                 csv_content += f"Unternehmensdaten,Modus,\"{app_mode}\"\n"
+                csv_content += f"Sprach-Auswahl,Zielsprache,\"{target_language}\"\n"
                 csv_content += f"Stammdaten,Stundensatz (Netto),{hourly_rate} EUR\n"
                 csv_content += f"Stammdaten,Anfahrt/Spesen,{travel_fee} EUR\n"
                 csv_content += f"Stammdaten,Materialaufschlag,{material_markup}%\n"
