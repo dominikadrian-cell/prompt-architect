@@ -15,7 +15,7 @@ st.set_page_config(
 st.title("⚡ Prompt-Architect: Industrial & Handwerk Edition")
 st.markdown("### Modul-Suite aktiv: Workflow, Multi-Upload (PDF & Word), Revisionssicherer Audit-Trail, Mini-RAG & Internationale Sprachwahl")
 
-# --- SIDEBAR: API-KEY & MODUS-HAL ---
+# --- SIDEBAR: API-KEY & MODUS-WAHL ---
 st.sidebar.header("🔑 API-Konfiguration")
 api_key_input = st.sidebar.text_input(
     "Google AI Studio API-Key",
@@ -36,7 +36,7 @@ target_model = st.sidebar.selectbox(
     key="model_select"
 )
 
-# --- NEU: SPRACHAUSWAHL ---
+# --- SPRACHAUSWAHL ---
 st.sidebar.header("🌍 3. Ausgabesprache")
 target_language = st.sidebar.selectbox(
     "Sprache für das Ergebnis:",
@@ -182,7 +182,7 @@ if selected_workflow != "Manuell eingeben (Freitext)" and initial_task_text:
 
 col_demo1, col_demo2 = st.columns([1, 1])
 with col_demo1:
-    if st.button("🚀 Horror-Lastenheft laden", use_container_width=True):
+    if st.button("🚀 Horrorlastenheft Demonstration", use_container_width=True):
         st.session_state["task_input_area"] = DEMO_HORROR_LASTENHEFT
         st.rerun()
 
@@ -197,7 +197,7 @@ with col1:
     task_description = st.text_area(
         "Konkreter Sachverhalt / Aufgabendetails:",
         height=180,
-        placeholder="Beschreibe hier den konkreten Fall oder klicke oben auf 'Horror-Lastenheft laden'...",
+        placeholder="Beschreibe hier den konkreten Fall oder klicke oben auf 'Horrorlastenheft Demonstration'...",
         key="task_input_area"
     )
 
