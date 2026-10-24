@@ -102,7 +102,7 @@ else:
         "📊 Technischer Audit-Report & Meilenstein-Freigabe": "Erstelle einen formalen Audit- und Freigabebericht für den anstehenden Projektabschnitt gemäß ISO 9001 und unseren Qualitätsstandards."
     }
 
-# --- SESSION STATE INITIALISIERUNG ---
+# --- SESSION STATE INITIALISIERUNG FÜR DEN DEMO-MODUS ---
 if "company_input" not in st.session_state:
     st.session_state["company_input"] = default_company
 if "rag_input" not in st.session_state:
@@ -117,7 +117,7 @@ DEMO_HORROR_LASTENHEFT = """Projekt X-99: SPS-Automation und Roboterzellen-Anbin
 3. Schnittstellen: Gewährleistung erstreckt sich auch auf bauseits gestellte Fundamente und Vorleistungen Dritter.
 4. Äquivalenz: Bis zu 15 % nachträgliche Leistungsänderungen (Change Requests) sind ohne Mehrkosten im Festpreis enthalten."""
 
-# --- MODUL 2: UNTERNEHMENSPROFIL ---
+# --- MODUL 2: UNTERNEHMENSPROFIL (VOLLE DROPDOWNS) ---
 st.sidebar.header("4. Unternehmensprofil & Gewerk")
 
 company_name = st.sidebar.text_input("Betriebs- / Firmenname", value=st.session_state["company_input"], key="company_input")
@@ -145,13 +145,6 @@ company_rag_context = st.sidebar.text_area(
     placeholder="Trage hier deine konkreten Firmen-Regeln ein...",
     key="rag_input"
 )
-
-# --- AUTOPILOT-DEMO BUTTON IN DER SIDEBAR ---
-if st.sidebar.button("🎬 Autopilot-Demo starten", use_container_width=True):
-    st.session_state["company_input"] = "Industrie-Anlagenbau Rhein-Ruhr GmbH"
-    st.session_state["rag_input"] = "Interne Regel: Jede Pönale-Klausel über 0,2% pro Tag muss vor Angebotsabgabe von der Rechtsabteilung freigegeben werden. Keine ungedeckten Schnittstellenrisiken bei Fremdfundamenten."
-    st.session_state["task_input_area"] = DEMO_HORROR_LASTENHEFT
-    st.rerun()
 
 # --- MODUL 3: STAMMDATEN ---
 with st.sidebar.expander("💼 5. Stammdaten & Kalkulation"):
@@ -183,11 +176,15 @@ if selected_workflow != "Manuell eingeben (Freitext)" and initial_task_text:
 col_demo1, col_demo2 = st.columns([1, 1])
 with col_demo1:
     if st.button("🚀 Horrorlastenheft Demonstration", use_container_width=True):
+        st.session_state["company_input"] = "Industrie-Anlagenbau Rhein-Ruhr GmbH"
+        st.session_state["rag_input"] = "Interne Regel: Jede Pönale-Klausel über 0,2% pro Tag muss vor Angebotsabgabe von der Rechtsabteilung freigegeben werden. Keine ungedeckten Schnittstellenrisiken bei Fremdfundamenten."
         st.session_state["task_input_area"] = DEMO_HORROR_LASTENHEFT
         st.rerun()
 
 with col_demo2:
     if st.button("🗑️ Eingabe zurücksetzen", use_container_width=True):
+        st.session_state["company_input"] = default_company
+        st.session_state["rag_input"] = ""
         st.session_state["task_input_area"] = ""
         st.rerun()
 
