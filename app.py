@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 st.title("⚡ Prompt-Architect: Industrial & Handwerk Edition")
-st.markdown("### Modul-Suite aktiv: Workflow, Multi-Upload (PDF & Word), Revisionssicherer Audit-Trail, Mini-RAG & Internationale Sprachwahl")
+st.markdown("### Modul-Suite aktiv: Workflow, Multi-Upload (PDF & Word), Revisionssicherer Audit-Trail, Mini-RAG & Wert-Baukasten")
 
 # --- SIDEBAR: API-KEY & MODUS-WAHL ---
 st.sidebar.header("🔑 API-Konfiguration")
@@ -60,7 +60,12 @@ if "Handwerk" in app_mode:
         "Kundenfreundlich, nahbar & lösungsorientiert",
         "Pragmatisch, kurz & direkt (Baustellen-Fokus)"
     ]
-    default_values = "- Pünktliche Lieferung und saubere Ausführung.\n- Keine versteckten Kosten, ehrliche Handschlagqualität.\n- Wir verlassen jede Baustelle besenrein."
+    default_core_values = [
+        "Pünktliche Lieferung & saubere Ausführung",
+        "Ehrliche Handschlagqualität & keine versteckten Kosten",
+        "VOB/B Rechtssicherheit bei Baustellen-Verträgen",
+        "Saubere Baustelle / besenreine Übergabe"
+    ]
     default_hourly = 65.00
     default_travel = 45.00
     default_positions = "Montagestunde Handwerker: 65.00 € / Std.\nAnfahrtspauschale: 45.00 €\nMaterial-Aufschlag: 20%"
@@ -88,7 +93,12 @@ else:
         "Technisch-Sachlich: Ingenieursfokus, datengetrieben",
         "Verhandlungsstark & Bestimmt: Claim-Management & Risikominimierung"
     ]
-    default_values = "- Einhaltung aller ISO-Normen, VOB/B & BGB-Vorgaben.\n- Keine ungeprüften Haftungsrisiken bei Ausschreibungen.\n- Präzise Fristeneinhaltung und nachvollziehbare Dokumentation."
+    default_core_values = [
+        "Einhaltung aller ISO-Normen, VOB/B & BGB-Vorgaben",
+        "Keine ungeprüften Haftungsrisiken bei Ausschreibungen",
+        "Präzise Fristeneinhaltung und nachvollziehbare Dokumentation",
+        "Aktives Claim-Management bei bauseitigen Verzögerungen"
+    ]
     default_hourly = 115.00
     default_travel = 150.00
     default_positions = "Ingenieur-Stunde (Konstruktion): 115.00 € / Std.\nSPS-Programmierung & Validierung: 125.00 € / Std.\nProjektleitung & Inbetriebnahme: 105.00 € / Std."
@@ -117,7 +127,7 @@ DEMO_HORROR_LASTENHEFT = """Projekt X-99: SPS-Automation und Roboterzellen-Anbin
 3. Schnittstellen: Gewährleistung erstreckt sich auch auf bauseits gestellte Fundamente und Vorleistungen Dritter.
 4. Äquivalenz: Bis zu 15 % nachträgliche Leistungsänderungen (Change Requests) sind ohne Mehrkosten im Festpreis enthalten."""
 
-# --- FRÜHER DEMO-BUTTON IN DER SIDEBAR (BEVOR DIE WIDGETS ERSTELLT WERDEN) ---
+# --- PRÄSENTATIONS-MODUS / DEMO-BUTTON (VOR DEN WIDGETS) ---
 st.sidebar.markdown("---")
 st.sidebar.subheader("🎬 Präsentations-Modus")
 if st.sidebar.button("🚀 Horrorlastenheft Demonstration", use_container_width=True):
@@ -135,7 +145,7 @@ company_name = st.sidebar.text_input(
     "Betriebs- / Firmenname", 
     value=st.session_state["company_input"], 
     key="company_input",
-    help="Trage hier den Namen deines eigenen Betriebs ein (oder nutze den Demo-Button)."
+    help="Trage hier deinen eigenen Betriebs- oder Firmennamen ein."
 )
 founding_year = st.sidebar.text_input(
     "Historie / Größe", 
@@ -152,7 +162,37 @@ else:
     industry_sector = selected_industry
 
 brand_tone = st.sidebar.selectbox("Tonalität & Corporate Language", tone_options)
-company_values = st.sidebar.text_area("Kernwerte & Standards", height=100, value=default_values)
+
+# --- NEU: WERT-BAUKASTEN (MULTI-SELECT FÜR KERNWERTE) ---
+st.sidebar.markdown("### 💎 Kernwerte & Standards (Baukasten)")
+available_value_options = [
+    "Pünktliche Lieferung & saubere Ausführung",
+    "Ehrliche Handschlagqualität & keine versteckten Kosten",
+    "VOB/B & BGB Rechtssicherheit bei Verträgen",
+    "Strenge Einhaltung von ISO-Normen & CE-Vorgaben",
+    "Keine ungedeckten Schnittstellenrisiken bei Fremdgewerken",
+    "Saubere Baustelle / besenreine Übergabe",
+    "Aktives Claim-Management & Fristenkontrolle"
+]
+
+selected_core_values = st.sidebar.multiselect(
+    "Wähle deine Betriebswerte (Mehrfachauswahl):",
+    available_value_options,
+    default=default_core_values[:3],
+    help="Klicke Bausteine an oder wähle sie ab, um deine Firmen-DNA zu definieren."
+)
+
+custom_value_addition = st.sidebar.text_area(
+    "Eigene Zusatzregel (optional):",
+    placeholder="Trage hier weitere individuelle Standards ein...",
+    height=60
+)
+
+# Zusammenbau der Kernwerte für den Prompt
+company_values_list = [f"- {v}" for v in selected_core_values]
+if custom_value_addition:
+    company_values_list.append(f"- {custom_value_addition}")
+company_values = "\n".join(company_values_list)
 
 # --- FIRMEN-GEDÄCHTNIS (MINI-RAG) ---
 st.sidebar.markdown("---")
@@ -160,9 +200,9 @@ st.sidebar.header("🧠 Firmen-Gedächtnis (Mini-RAG)")
 
 company_rag_context = st.sidebar.text_area(
     "Unternehmens-DNA & spezifische Betriebsnormen:",
-    height=130,
+    height=120,
     value=st.session_state["rag_input"],
-    placeholder="Trage hier deine konkreten Firmen-Regeln ein...",
+    placeholder="Trage hier interne Regeln & Freigabegrenzen ein...",
     key="rag_input"
 )
 
@@ -229,7 +269,7 @@ if st.button(f"🚀 Master-Prompt ausführen ({'Handwerk' if 'Handwerk' in app_m
     elif not api_key_input:
         st.warning("Bitte trage links deinen Google AI Studio API-Key ein.")
     else:
-        with st.spinner(f"Kompiliere Profil, Mini-RAG, Sprachwahl ({target_language}), {len(uploaded_files) if uploaded_files else 0} Dokument(e) & Stammdaten..."):
+        with st.spinner(f"Kompiliere Profil, Wert-Baukasten, Sprachwahl ({target_language}), {len(uploaded_files) if uploaded_files else 0} Dokument(e) & Stammdaten..."):
             try:
                 client = genai.Client(api_key=api_key_input)
 
@@ -239,14 +279,14 @@ if st.button(f"🚀 Master-Prompt ausführen ({'Handwerk' if 'Handwerk' in app_m
 - Branche / Sektor: {industry_sector}
 - Corporate Language / Tonalität: {brand_tone}
 - Modus-Fokus: {mode_instructions}
-- Betriebliche Kernwerte & Standards:
+- Angeklickte Kernwerte & Betriebsnormen (Wert-Baukasten):
 {company_values}
 
 [ZIELSPRACHE & LOKALISIERUNG]
 - Die gesamte Antwort, Analyse und Ausarbeitung muss zwingend in folgender Sprache verfasst werden: {target_language}.
 
 [INTERNES FIRMEN-GEDÄCHTNIS & MINI-RAG-KONTEXT]
-Der Nutzer hat folgende spezifische Betriebsnormen, Regeln und DNA hinterlegt, die für ALLE nachfolgenden Aufgaben als absolut verbindliches Gesetz gelten:
+Der Nutzer hat folgende spezifische Betriebsnormen und Regeln hinterlegt, die für ALLE nachfolgenden Aufgaben als absolut verbindliches Gesetz gelten:
 {company_rag_context if company_rag_context else "Keine spezifischen Zusatzregeln hinterlegt – nutze professionellen Standard des Gewerks."}
 
 [BETRIEBLICHE STAMMDATEN & KALKULATION]
@@ -267,7 +307,7 @@ Deine Aufgabe ist es, das vorliegende Anliegen bzw. die hochgeladenen Dokumente 
 
 [OUTPUT-REGELN]
 1. Verfasse das Resultat strikt in der gewählten Zielsprache: {target_language}.
-2. Passe die Tiefe und Sprache exakt an den gewählten Modus und das Firmen-Gedächtnis an.
+2. Passe die Tiefe und Sprache exakt an den gewählten Modus und den Kernwerte-Baukasten an.
 3. Nutze exakt die hinterlegten Stundensätze, Aufschläge und Positionen für jegliche Berechnungen.
 4. Formuliere direkt einsatzbereit (Executive-Ready / Versandfertig).
 5. Strukturiere die Ausgabe übersichtlich mit sauberen Absätzen.
