@@ -36,11 +36,12 @@ app_mode = st.sidebar.radio(
 )
 
 st.sidebar.header("2. Ziel-Modell wählen")
-# SAUBER FIXIERT: Nur noch das stabile Standard-Modell ohne Auswahllisten-Fehler
+# BEREINIGT: Nur noch die funktionierenden Standard-Modelle in der Auswahl
 target_model = st.sidebar.selectbox(
     "Welche KI wird eingesetzt?",
     [
-        "gemini-1.5-flash"
+        "gemini-1.5-flash",
+        "gemini-1.5-pro"
     ],
     key="model_select"
 )
@@ -81,7 +82,7 @@ if "Handwerk" in app_mode:
     
     workflow_snippets = {
         "Manuell eingeben (Freitext)": "",
-        "⚠️ VOB-Bedenkenanzeige (Mangelhafte Vorleistung)": "Erstelle eine formgerechte und rechtssichere Bedenkenanzeige gemäß VOB/B. Der Untergrund bzw. die bauseits erbrachte Vorleistung ist mangelhaft und hinterlässt Haftungsrisiken.",
+        "⚠️ VOB-Bedenkenanzeige (Mangelhafte Vorleistung)": "Erstelle eine formgerechte und rechtssichere Bedenkenanzeige gemäß VOB/B. Der Untergrund bzw. die bauseits erbrachte Vorleistung ist mangelhaft und behindert unsere fachgerechte Ausführung. Weise auf Haftungsrisiken hin.",
         "📋 Nachtragsangebot erstellen": "Erbeite ein sauberes Nachtragsangebot für die zusätzlich geforderten Leistungen (Mehrumfang). Nutze exakt unsere hinterlegten Stundensätze und Materialaufschläge.",
         "🛡️ Unberechtigte Mängelrüge / Rechnungskürzung abwehren": "Formuliere eine bestimmte, aber sachliche Erwiderung auf die unberechtigte Mängelrüge des Kunden. Weise nach, dass unsere Leistung vertragsgerecht und fehlerfrei erbracht wurde.",
         "✉️ Verbindliches Kundenangebot verfassen": "Erstelle ein vollständiges, professionelles Angebot im Betriebsstil basierend auf der Kundenanfrage. Nutze unsere Standard-Positionen und Zahlungsbedingungen."
